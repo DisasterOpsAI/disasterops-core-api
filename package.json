@@ -1,0 +1,15 @@
+{
+  "name": "disasterops-core-api",
+  "version": "1.0.0",
+  "description": "A Node.js/Express monolith handling authentication, data persistence, task orchestration, and integrations with mapping and comms services.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

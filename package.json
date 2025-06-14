@@ -1,15 +1,30 @@
 {
   "name": "disasterops-core-api",
   "version": "1.0.0",
-  "description": "A Node.js/Express monolith handling authentication, data persistence, task orchestration, and integrations with mapping and comms services.",
-  "main": "index.js",
+  "description": "",
+  "main": "src/app.js",
+  "type": "module",
   "scripts": {
+    "start": "node src/app.js",
+    "lint": "eslint 'src/**/*.{js,jsx,ts,tsx}'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "packageManager": "pnpm@10.12.1",
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.29.0",
+    "eslint": "^9.29.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-prettier": "^5.4.1",
+    "globals": "^16.2.0",
+    "prettier": "^3.5.3"
+  },
   "dependencies": {
-    "nodemon": "^3.1.10"
+    "express": "^5.1.0"
   }
 }

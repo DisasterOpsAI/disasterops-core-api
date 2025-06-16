@@ -1,47 +1,85 @@
-# 🧠 DisasterOps - AI-Powered Disaster Response Coordination (Backend)
+# DisasterOps – Backend
 
-DisasterOps is a backend system designed to enable intelligent coordination and communication during disaster events using an AI-agentic workflow. It uses Node.js with Firebase Realtime Database and LLMs to process multimodal requests, prioritize tasks, and assist multiple user roles.
+This is the **backend** service for **DisasterOps**, an AI-powered disaster response coordination platform. It provides APIs for submitting help requests, task assignment, user authentication, and real-time updates.
 
-This backend handles request parsing, task assignment, agent-based decision-making, and sync functionalities to ensure real-time, efficient disaster response operations.
+The backend is built with **Node.js** and **Express**, and connects to **Firebase Realtime Database**. AI agent logic (e.g., prioritization, assignment) is handled separately in the AI repository and consumed via API or logic hooks.
 
----
+## Key Features
 
-## ✨ Features
+-  RESTful API built with Express
+-  Firebase Authentication (role-based: Admin, Responder, Volunteer, Affected)
+-  AI integration via external service (separate AI repo)
+-  Firebase Realtime Database support for tasks, users, and resources
+-  Sync support for offline devices
+-  Modular and scalable structure for easy maintenance
 
-- **AI Agentic Workflow**: Dynamic decision-making using lightweight rules or LLMs.
-- **Multimodal Request Handling**: Accepts text and image-based requests.
-- **Task Prioritization**: Based on urgency, location, and resource availability.
-- **Real-Time Updates**: For responders and admins via Firebase integration.
-- **Offline Sync Support**: Enables local caching and automatic resync on reconnect.
-- **Secure Role-Based Access**: Supports First Responders, Volunteers, Citizens, and Admins.
 
----
+## Technologies Used
 
-## 🧰 Technologies
+| Component         | Tech                             |
+|------------------|----------------------------------|
+| Runtime           | Node.js                          |
+| Framework         | Express.js                       |
+| Database          | Firebase Realtime Database       |
+| Authentication    | Firebase Auth (JWT optional)     |
+| AI Logic          | External AI Agent API (separate) |
 
-| Category               | Stack                             |
-|------------------------|------------------------------------|
-| Backend Framework      | Node.js (ESM) + Express            |
-| Database               | Firebase Realtime Database         |
-| Auth                   | Firebase Auth                      |
-| AI Integration         | OpenAI API / Custom Agents         |
-| Cloud Functions (opt.) | Firebase / Vercel (optional)       |
-| Data Formats           | JSON / Base64 (for images)         |
 
----
-
-## 📁 Project Structure
+## Folder Structure
 
 ```
 backend/
 ├── src/
-│   ├── ai/                # Agent logic (LLMs, scoring, assignment)
-│   ├── routes/            # Express route handlers
-│   ├── utils/             # Helper functions
-│   ├── FirebaseRealtimeStore.js  # Database abstraction layer
-│   ├── config.js          # Firebase/service key setup
-│   └── server.js          # App entrypoint
-├── firebaseServiceAccountKey.json
+│   ├── routes/                     # API route handlers (e.g., /requests, /users)
+│   ├── controllers/                # Logic for handling requests
+│   ├── services/                   # Firebase operations, data handling
+│   ├── middlewares/                # Auth, error handling, etc.
+│   ├── utils/                      # Utility functions
+│   ├── FirebaseRealtimeStore.js    # Central DB wrapper
+│   ├── config.js                   # Firebase and environment configs
+│   └── server.js                   # Main Express app
+├── firebaseServiceAccountKey.json  # Firebase admin credentials
 ├── package.json
-└── README.md              # This file
+├── .env.example
+└── README.md
 ```
+
+##  Setup Instructions
+
+### 1. Clone the Repo
+
+```bash
+git clone https://github.com/DisasterOpsAI/disasterops-core-api.git
+cd disasterops-core-api
+```
+
+### 2. Install Dependencies
+```
+pnpm install
+```
+
+### 3. Start the Server
+```
+node src/server.js
+```
+
+## Development Commands
+```
+npm run dev      # Run with nodemon
+npm run lint     # (If configured) Lint your code
+npm run format   # Format using Prettier (optional)
+```
+
+## Contributing
+
+We welcome contributions! Please:
+
+- Fork the repo
+- Create a feature branch
+- Follow the linting/formatting conventions
+- Open a pull request
+
+
+## License
+
+MIT – See `LICENSE` file for details.

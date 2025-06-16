@@ -32,6 +32,7 @@ This backend handles request parsing, task assignment, agent-based decision-maki
 
 ## 📁 Project Structure
 
+```
 backend/
 ├── src/
 │   ├── ai/                # Agent logic (LLMs, scoring, assignment)
@@ -43,3 +44,4 @@ backend/
 ├── firebaseServiceAccountKey.json
 ├── package.json
 └── README.md              # This file
+```

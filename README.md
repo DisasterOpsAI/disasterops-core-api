@@ -21,8 +21,8 @@ The backend is built with **Node.js** and **Express**, and integrates with **Fir
 | Runtime           | Node.js                                  |
 | Framework         | Express.js                               |
 | Main Database    | Firebase Firestore                        |
-| Realtime Support | Firebase Realtime Database (for sync)     |
-| Authentication    | Firebase Auth (JWT optional)             |
+| Realtime Support | Firebase Realtime Database    |
+| Authentication    | Firebase Auth          |
 | AI Logic          | External AI Agent API (maintained in a separate repository)|
 
 

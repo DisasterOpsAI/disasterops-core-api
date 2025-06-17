@@ -2,27 +2,28 @@
 
 This is the **backend** service for **DisasterOps**, an AI-powered disaster response coordination platform. It provides APIs for submitting help requests, task assignment, user authentication, and real-time updates.
 
-The backend is built with **Node.js** and **Express**, and connects to **Firebase Realtime Database**. AI agent logic (e.g., prioritization, assignment) is handled separately in the AI repository and consumed via API or logic hooks.
+The backend is built with **Node.js** and **Express**, and integrates with **Firebase** services for database operations, authentication, storage, and more. AI agent logic (e.g., prioritization, assignment) is handled separately in the AI repository and consumed via API or logic hooks.
 
 ## Key Features
 
 -  RESTful API built with Express
 -  Firebase Authentication (role-based: Admin, Responder, Volunteer, Affected)
 -  AI integration via external service (separate AI repo)
--  Firebase Realtime Database support for tasks, users, and resources
+-  Realtime support for tasks, users, and resources
 -  Sync support for offline devices
 -  Modular and scalable structure for easy maintenance
 
 
 ## Technologies Used
 
-| Component         | Tech                             |
-|------------------|----------------------------------|
-| Runtime           | Node.js                          |
-| Framework         | Express.js                       |
-| Database          | Firebase Realtime Database       |
-| Authentication    | Firebase Auth (JWT optional)     |
-| AI Logic          | External AI Agent API (separate) |
+| Component         | Tech                                     |
+|------------------|-------------------------------------------|
+| Runtime           | Node.js                                  |
+| Framework         | Express.js                               |
+| Main Database    | Firebase Firestore                        |
+| Realtime Support | Firebase Realtime Database (for sync)     |
+| Authentication    | Firebase Auth (JWT optional)             |
+| AI Logic          | External AI Agent API (maintained in a separate repository)|
 
 
 ## Folder Structure
@@ -60,14 +61,14 @@ pnpm install
 
 ### 3. Start the Server
 ```
-node src/server.js
+pnpm dev
 ```
 
 ## Development Commands
 ```
-npm run dev      # Run with nodemon
-npm run lint     # (If configured) Lint your code
-npm run format   # Format using Prettier (optional)
+pnpm run dev      # Run with nodemon
+pnpm run lint     # Lint your code using ESLint
+pnpm run format   # Format using Prettier (optional)
 ```
 
 ## Contributing

@@ -39,7 +39,6 @@ backend/
 │   ├── FirebaseRealtimeStore.js    # Central DB wrapper
 │   ├── config.js                   # Firebase and environment configs
 │   └── server.js                   # Main Express app
-├── firebaseServiceAccountKey.json  # Firebase admin credentials
 ├── package.json
 ├── .env.example
 └── README.md

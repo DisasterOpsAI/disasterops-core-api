@@ -29,18 +29,56 @@ The backend is built with **Node.js** and **Express**, and integrates with **Fir
 ## Folder Structure
 
 ```
-backend/
+my-express-backend/
 ├── src/
-│   ├── routes/                     # API route handlers (e.g., /requests, /users)
-│   ├── controllers/                # Logic for handling requests
-│   ├── services/                   # Firebase operations, data handling
-│   ├── middlewares/                # Auth, error handling, etc.
-│   ├── utils/                      # Utility functions
-│   ├── FirebaseRealtimeStore.js    # Central DB wrapper
-│   ├── config.js                   # Firebase and environment configs
-│   └── server.js                   # Main Express app
-├── package.json
+│   ├── config/
+│   │   ├── index.js               # Loads env, selects provider adapters
+│   │   └── providers.js           # Maps CLOUD_PROVIDER to adapter modules
+│   │
+│   ├── common/
+│   │   ├── logger/                # Winston or similar
+│   │   └── errors/                # Custom error classes
+│   │
+│   ├── adapters/                  # Provider-specific implementations
+│   │   ├── database/
+│   │   │   ├── firebaseDb.js      # Firebase Realtime Database adapter
+│   │   │   └── mongoDb.js         # MongoDB adapter (example)
+│   │   └── storage/
+│   │       ├── firebaseStorage.js
+│   │       └── s3Storage.js       # AWS S3 adapter example
+│   │
+│   ├── domain/                    # Feature modules
+│   │   ├── users/
+│   │   │   ├── users.model.js
+│   │   │   ├── users.service.js
+│   │   │   ├── users.controller.js
+│   │   │   └── users.routes.js
+│   │   └── posts/
+│   │       ├── posts.model.js
+│   │       ├── posts.service.js
+│   │       ├── posts.controller.js
+│   │       └── posts.routes.js
+│   │
+│   ├── interfaces/                # Abstractions for adapters
+│   │   ├── IDatabaseService.js
+│   │   └── IStorageService.js
+│   │
+│   ├── middlewares/
+│   │   ├── auth.js
+│   │   └── errorHandler.js
+│   │
+│   ├── routes/
+│   │   └── index.js               # Main router mounting feature routes
+│   │
+│   ├── app.js                     # Express app setup
+│   └── server.js                  # Starts HTTP server
+│
+├── tests/                         # Unit & integration tests
+│   ├── unit/
+│   └── integration/
+│
 ├── .env.example
+├── package.json
 └── README.md
 ```
 
@@ -82,4 +120,4 @@ We welcome contributions! Please:
 
 ## License
 
-MIT – See `LICENSE` file for details.
+The Unlicense

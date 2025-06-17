@@ -120,4 +120,4 @@ We welcome contributions! Please:
 
 ## License
 
-The Unlicense
+The Unlicense – See LICENSE file for details.

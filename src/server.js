@@ -1,7 +1,8 @@
 import { Router } from "express";
 import FirebaseRealtimeStore from "./FirebaseRealtimeStore.js";
 
-const store = new FirebaseRealtimeStore();
+const store = new FirebaseRealtimeStore("api/testing", { createdBy: "Thilina" });
+
 const initRouter = Router();
 
 initRouter.get("/", (_, res) => {

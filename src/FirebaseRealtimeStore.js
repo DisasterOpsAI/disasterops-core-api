@@ -1,45 +1,54 @@
-import admin from "firebase-admin";
-import serviceAccount from "./firebaseServiceAccountKey.js";
+import db from "./config/firebase.js";
 import RealtimeStore from "./RealtimeStore.js";
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://disaster-ops-api-default-rtdb.firebaseio.com/"
-});
-
-const db = admin.database();
-
 class FirebaseRealtimeStore extends RealtimeStore {
+  constructor(folder = "", info = {}) {
+    super();
+    this.folder = folder;
+    this.info = info;
+  }
+
+  makePath(path) {
+    return this.folder ? `${this.folder}/${path}` : path;
+  }
+
   async create(path, data) {
     try {
-      await db.ref(path).set(data);
+      await db.ref(this.makePath(path)).set(data);
+      return true;
     } catch (error) {
-      throw new Error("Firebase Create Failed: " + error.message);
+      console.error("Firebase Realtime Store Create Failed:", error.message);
+      return false;
     }
   }
 
   async update(path, data) {
     try {
-      await db.ref(path).update(data);
+      await db.ref(this.makePath(path)).update(data);
+      return true;
     } catch (error) {
-      throw new Error("Firebase Update Failed: " + error.message);
+      console.error("Firebase Realtime Store Update Failed:", error.message);
+      return false;
     }
   }
 
   async delete(path) {
     try {
-      await db.ref(path).remove();
+      await db.ref(this.makePath(path)).remove();
+      return true;
     } catch (error) {
-      throw new Error("Firebase Delete Failed: " + error.message);
+      console.error("Firebase Realtime Store Delete Failed:", error.message);
+      return false;
     }
   }
 
   async read(path) {
     try {
-      const snapshot = await db.ref(path).once("value");
+      const snapshot = await db.ref(this.makePath(path)).once("value");
       return snapshot.val();
     } catch (error) {
-      throw new Error("Firebase Read Failed: " + error.message);
+      console.error("Firebase Realtime Store Read Failed:", error.message);
+      return null;
     }
   }
 }

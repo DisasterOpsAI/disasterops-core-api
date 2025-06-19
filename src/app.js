@@ -6,10 +6,8 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Use the router
 app.use("/", initRouter);
 
-// Start the server
 const server = app.listen(PORT, () => {
   const host = server.address().address;
   const port = server.address().port;

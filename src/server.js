@@ -1,5 +1,5 @@
 import { Router } from "express";
-import FirebaseRealtimeStore from "./FirebaseRealtimeStore.js";
+import FirebaseRealtimeStore from "./adapters/database/FirebaseRealtimeStore.js";
 
 const store = new FirebaseRealtimeStore("api/testing", { createdBy: "Thilina" });
 
@@ -9,7 +9,7 @@ initRouter.get("/", (_, res) => {
   res.send("Hello World!");
 });
 
-initRouter.post("/firebase-testing", async (req, res) => {
+initRouter.post("/firebase-realtime-testing", async (req, res) => {
   const { method, path, data } = req.body;
 
   try {

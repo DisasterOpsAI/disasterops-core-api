@@ -1,5 +1,5 @@
-import db from "./config/firebase.js";
 import RealtimeStore from "./RealtimeStore.js";
+import db from "../../config/firebase.js";
 
 class FirebaseRealtimeStore extends RealtimeStore {
   constructor(folder = "", info = {}) {
@@ -17,8 +17,7 @@ class FirebaseRealtimeStore extends RealtimeStore {
       await db.ref(this.makePath(path)).set(data);
       return true;
     } catch (error) {
-      console.error("Firebase Realtime Store Create Failed:", error.message);
-      return false;
+      throw new Error(`Firebase Realtime Store Create Failed: ${error.message}`);
     }
   }
 
@@ -27,8 +26,7 @@ class FirebaseRealtimeStore extends RealtimeStore {
       await db.ref(this.makePath(path)).update(data);
       return true;
     } catch (error) {
-      console.error("Firebase Realtime Store Update Failed:", error.message);
-      return false;
+      throw new Error(`Firebase Realtime Store Update Failed: ${error.message}`);
     }
   }
 
@@ -37,8 +35,7 @@ class FirebaseRealtimeStore extends RealtimeStore {
       await db.ref(this.makePath(path)).remove();
       return true;
     } catch (error) {
-      console.error("Firebase Realtime Store Delete Failed:", error.message);
-      return false;
+      throw new Error(`Firebase Realtime Store Delete Failed: ${error.message}`);
     }
   }
 
@@ -47,8 +44,7 @@ class FirebaseRealtimeStore extends RealtimeStore {
       const snapshot = await db.ref(this.makePath(path)).once("value");
       return snapshot.val();
     } catch (error) {
-      console.error("Firebase Realtime Store Read Failed:", error.message);
-      return null;
+      throw new Error(`Firebase Realtime Store Read Failed: ${error.message}`);
     }
   }
 }

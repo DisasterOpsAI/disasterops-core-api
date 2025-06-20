@@ -1,4 +1,4 @@
-import FirebaseRealtimeStore from "../firebase/realtimeDb.js";
+import FirebaseRealtimeStore from "../firebase/RealtimeStore.js";
 const userStore = new FirebaseRealtimeStore("users");
 
 export async function readUser(id) {

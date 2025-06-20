@@ -1,51 +1,49 @@
 import db from "../config/firebaseConfig.js";
 
 class FirebaseRealtimeStore {
-  constructor(folder = "", info = {}) {
-    this.folder = folder;
-    this.info = info;
+  constructor(basePath) {
+    if (!basePath) throw new Error("Missing Details. Required 'basePath'.");
+    this.basePath = basePath;
   }
 
-  makePath(path) {
-    return this.folder ? `${this.folder}/${path}` : path;
+  buildRef(id) {
+    return db.ref(`${this.basePath}/${id}`);
   }
 
-  async create(path, data) {
+  async create(id, data) {
+    const ref = this.buildRef(id);
     try {
-      await db.ref(this.makePath(path)).set(data);
-      return { id: path, ...data };
+      await ref.set(data);
+      return { id, ...data };
     } catch (error) {
-      throw new Error(
-        `Firebase Realtime Store Create Failed: ${error.message}`
-      );
+      throw new Error(`Firebase Realtime Store Create Failed: ${error.message}`);
     }
   }
 
-  async update(path, data) {
+  async update(id, data) {
+    const ref = this.buildRef(id);
     try {
-      await db.ref(this.makePath(path)).update(data);
-      return { id: path, ...data };
+      await ref.update(data);
+      return { id, ...data };
     } catch (error) {
-      throw new Error(
-        `Firebase Realtime Store Update Failed: ${error.message}`
-      );
+      throw new Error(`Firebase Realtime Store Update Failed: ${error.message}`);
     }
   }
 
-  async delete(path) {
+  async delete(id) {
+    const ref = this.buildRef(id);
     try {
-      await db.ref(this.makePath(path)).remove();
-      return { id: path };
+      await ref.remove();
+      return { id };
     } catch (error) {
-      throw new Error(
-        `Firebase Realtime Store Delete Failed: ${error.message}`
-      );
+      throw new Error(`Firebase Realtime Store Delete Failed: ${error.message}`);
     }
   }
 
-  async read(path) {
+  async read(id) {
+    const ref = this.buildRef(id);
     try {
-      const snapshot = await db.ref(this.makePath(path)).once("value");
+      const snapshot = await ref.once("value");
       return snapshot.exists() ? snapshot.val() : null;
     } catch (error) {
       throw new Error(`Firebase Realtime Store Read Failed: ${error.message}`);

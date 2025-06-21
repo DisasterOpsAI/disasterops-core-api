@@ -1,5 +1,6 @@
 import db from '../config/firebaseConfig.js';
 import getLogger from '../config/loggerConfig.js';
+
 const logger = getLogger();
 
 class FirebaseRealtimeStore {

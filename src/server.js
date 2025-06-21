@@ -1,7 +1,7 @@
-import { Router } from "express";
-const initRouter = Router();
+import app from "./app.js";
 
-initRouter.get("/", (_, res) => {
-  res.send("Hello World!");
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server listening on http://localhost:${PORT}`);
 });
-export default initRouter;

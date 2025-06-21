@@ -26,5 +26,6 @@ admin.initializeApp({
 
 const firestoreDB = admin.firestore();
 const realtimeDB = admin.database();
+const storageBucket = admin.storage().bucket();
 
-export {firestoreDB, realtimeDB};
+export {firestoreDB, realtimeDB, storageBucket};

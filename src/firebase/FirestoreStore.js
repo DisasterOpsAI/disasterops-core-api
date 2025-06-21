@@ -1,9 +1,10 @@
-import PersistentStore from './PersistentStore.js';
 import { firestore } from '../../config/firebaseConfig.js';
+import getLogger from '../../config/loggerConfig.js';
 
-class FirestoreStore extends PersistentStore {
+const logger = getLogger();
+
+class FirestoreStore {
   constructor(collectionName) {
-    super();
     if (!collectionName) throw new Error("Missing 'collectionName'");
     this.collection = firestore.collection(collectionName);
   }
@@ -13,7 +14,11 @@ class FirestoreStore extends PersistentStore {
       await this.collection.doc(id).set(data);
       return { id, ...data };
     } catch (err) {
-      throw new Error(`FirestoreStore.create failed: ${err.message}`);
+      logger.error(`FirestoreStore.create failed: ${err.message}`, {
+        id,
+        data,
+      });
+      return `FirestoreStore.create failed: ${err.message}`;
     }
   }
 
@@ -22,7 +27,8 @@ class FirestoreStore extends PersistentStore {
       const doc = await this.collection.doc(id).get();
       return doc.exists ? { id: doc.id, ...doc.data() } : null;
     } catch (err) {
-      throw new Error(`FirestoreStore.read failed: ${err.message}`);
+      logger.error(`FirestoreStore.read failed: ${err.message}`, { id });
+      return `FirestoreStore.read failed: ${err.message}`;
     }
   }
 
@@ -31,7 +37,11 @@ class FirestoreStore extends PersistentStore {
       await this.collection.doc(id).update(data);
       return { id, ...data };
     } catch (err) {
-      throw new Error(`FirestoreStore.update failed: ${err.message}`);
+      logger.error(`FirestoreStore.update failed: ${err.message}`, {
+        id,
+        data,
+      });
+      return `FirestoreStore.update failed: ${err.message}`;
     }
   }
 
@@ -40,7 +50,8 @@ class FirestoreStore extends PersistentStore {
       await this.collection.doc(id).delete();
       return { id };
     } catch (err) {
-      throw new Error(`FirestoreStore.delete failed: ${err.message}`);
+      logger.error(`FirestoreStore.delete failed: ${err.message}`, { id });
+      return `FirestoreStore.delete failed: ${err.message}`;
     }
   }
 }

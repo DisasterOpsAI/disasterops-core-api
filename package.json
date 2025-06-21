@@ -8,15 +8,24 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "lint": "eslint 'src/**/*.{js,jsx,ts,tsx}'",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint:fix": "eslint 'src/**/*.{js,jsx,ts,tsx}' --fix",
+    "format": "prettier --write 'src/**/*.{js,jsx,ts,tsx,json,md}'",
+    "format:check": "prettier --check 'src/**/*.{js,jsx,ts,tsx,json,md}'",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "sls:offline": "serverless offline",
+    "sls:invoke": "serverless invoke local --function app",
+    "sls:info": "serverless info",
+    "sls:logs": "serverless logs --function app --tail",
+    "sls:print": "serverless print"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "The Unlicence",
   "packageManager": "pnpm@10.12.1",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
+    "esbuild": "^0.25.5",
     "eslint": "^9.29.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-prettier": "^10.1.5",
@@ -34,8 +43,18 @@
     "eslint-plugin-unused-imports": "^4.1.4",
     "express": "^5.1.0",
     "express-winston": "^4.2.0",
+    "serverless-offline": "^14.4.0",
+    "serverless-esbuild": "^1.55.1",
+    "serverless-plugin-include-dependencies": "^6.1.1",
     "firebase-admin": "^13.4.0",
+    "serverless-http": "^3.2.0",
     "winston": "^3.17.0",
+    "serverless": "^4.17.1",
     "winston-daily-rotate-file": "^5.0.0"
+  },
+  "overrides": {
+    "serverless-esbuild": {
+      "serverless": "$serverless"
+    }
   }
 }

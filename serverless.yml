@@ -1,0 +1,46 @@
+service: disasterops-core-api
+frameworkVersion: '4'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  architecture: arm64
+  region: us-east-1
+
+build:
+  esbuild:
+    bundle: true
+    minify: true
+    sourcemap: false
+    format: esm
+    platform: node
+    target: node20
+    external:
+      - aws-sdk
+    banner: 
+      js: |
+        import { createRequire } from 'module';
+        const require = createRequire(import.meta.url);
+
+package:
+  individually: true 
+  patterns:
+    - '!**/*.md'
+    - '!**/*.test.*'
+    - '!**/docs/**'
+    - '!node_modules/aws-sdk/**'
+    - '!archive/**'
+    - '!api-tests/**'
+    - '!.github/**'
+    - '!logs/**'
+
+plugins:
+  - serverless-offline
+
+functions:
+  app:
+    handler: src/index.handler
+    memorySize: 1024
+    timeout: 30
+    events:
+      - httpApi: '*'

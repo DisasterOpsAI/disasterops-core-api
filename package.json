@@ -16,7 +16,8 @@
     "sls:invoke": "serverless invoke local --function app",
     "sls:info": "serverless info",
     "sls:logs": "serverless logs --function app --tail",
-    "sls:print": "serverless print"
+    "sls:print": "serverless print",
+    "deploy": "pnpm install --prod --ignore-scripts=false && rm -rf .serverless && npx serverless deploy"
   },
   "keywords": [],
   "author": "",

@@ -1,6 +1,20 @@
 # DisasterOps – Backend
 
-This is the **backend** service for **DisasterOps**, an AI-powered disaster response coordination platform. It provides APIs for submitting help requests, task assignment, user authentication, and real-time updates.
+This is the **backend** service for **DisasterOps**, an AI-powered disaster response coordination platform. It p### Available Serverless Commands
+
+All serverless commands are available through pnpm scripts:
+
+```bash
+# Local development and testing
+pnpm run sls:offline    # Run serverless locally (starts at localhost:3000)
+pnpm run sls:invoke     # Test specific functions locally
+pnpm run sls:info       # View serverless service information
+pnpm run sls:logs       # View function logs in real-time
+pnpm run sls:print      # Print the compiled CloudFormation template
+
+# Deployment
+pnpm run deploy         # Deploy to AWS Lambda (prod dependencies + clean deploy)
+``` for submitting help requests, task assignment, user authentication, and real-time updates.
 
 The backend is built with **Node.js** and **Express**, and integrates with **Firebase** services for database operations, authentication, storage, and more. AI agent logic (e.g., prioritization, assignment) is handled separately in the AI repository and consumed via API or logic hooks.
 
@@ -177,6 +191,27 @@ pnpm run sls:info     # View serverless information
 pnpm run sls:logs     # View function logs
 pnpm run sls:print    # Print serverless template
 ```
+
+## Deployment
+
+### AWS Lambda Deployment
+
+To deploy the application to AWS Lambda, use:
+
+```bash
+pnpm run deploy
+```
+
+This command will:
+1. Install production dependencies with post-install scripts enabled (for ESBuild)
+2. Clear any stale serverless artifacts  
+3. Deploy the application to AWS Lambda with optimized packaging
+
+### Prerequisites for Deployment
+
+- AWS CLI configured with appropriate credentials
+- AWS account with Lambda and API Gateway permissions
+- Serverless Framework configured for your AWS account
 
 ## Contributing
 

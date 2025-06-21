@@ -23,14 +23,19 @@ class StorageStore {
 
     const [exists] = await file.exists();
     if (exists) {
-      logger.warn(`File exists, returning URL: ${uniqueName}`);
+      const existingId = uniqueName.split('-')[0];
+      logger.warn(
+        `File already exists (id: ${existingId}), returning URL for: ${uniqueName}`
+      );
       const downloadURL = `https://storage.googleapis.com/${storageBucket.name}/${filePath}`;
-      return { id: uniqueName, path: filePath, downloadURL };
+      return { id: existingId, name: uniqueName, path: filePath, downloadURL };
     }
 
+    const CHUNK_SIZE= 5 * 1024 * 1024; // 5MB
+    const resumableUpload = fileBuffer.length > CHUNK_SIZE;
     await file.save(fileBuffer, {
       metadata: { contentType },
-      resumable: false,
+      resumable: resumableUpload,
     });
 
     let downloadURL;
@@ -45,18 +50,16 @@ class StorageStore {
     }
 
     logger.info(`File uploaded: ${uniqueName}`);
-    return { id: uniqueName, path: filePath, downloadURL };
+    return { id: uniqueId, name: uniqueName, path: filePath, downloadURL };
   }
 
   async read(fileName) {
     const { file, filePath } = this.getFile(fileName);
     const [exists] = await file.exists();
-    if (!exists) {
-      logger.warn(`File not found: ${fileName}`);
-      return null;
-    }
+    if (!exists) return null;
     const downloadURL = `https://storage.googleapis.com/${storageBucket.name}/${filePath}`;
-    return { id: fileName, path: filePath, downloadURL };
+    const id = fileName.split('-')[0];
+    return { id, name: fileName, path: filePath, downloadURL };
   }
 
   async update({ fileName, fileBuffer, contentType }) {
@@ -70,8 +73,9 @@ class StorageStore {
     });
     await file.makePublic();
     const downloadURL = `https://storage.googleapis.com/${storageBucket.name}/${filePath}`;
+    const id = fileName.split('-')[0];
     logger.info(`File updated: ${fileName}`);
-    return { id: fileName, path: filePath, downloadURL };
+    return { id, name: fileName, path: filePath, downloadURL };
   }
 
   async delete(fileName) {
@@ -79,8 +83,9 @@ class StorageStore {
     const [exists] = await file.exists();
     if (!exists) return null;
     await file.delete();
+    const id = fileName.split('-')[0];
     logger.info(`File deleted: ${fileName}`);
-    return { id: fileName };
+    return { id, name: fileName };
   }
 }
 

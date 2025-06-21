@@ -14,7 +14,7 @@ const getRedisClient = () => {
       },
     });
 
-    _redis_client.on('error', (err) => logger.info('Redis Client Error', err));
+    _redis_client.on('error', (err) => logger.error('Redis Client Error', err));
 
     _redis_client.connect().then(() => {
       logger.info('Redis client connected successfully!');

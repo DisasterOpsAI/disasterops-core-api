@@ -1,7 +1,7 @@
 import { createClient } from 'redis';
 import getLogger from './loggerConfig.js';
 const logger = getLogger();
-var _redis_client = null;
+let _redis_client = null;
 
 const getRedisClient = () => {
   if (!_redis_client) {

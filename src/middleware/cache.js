@@ -1,26 +1,32 @@
-import getRedisClient from '../config/redisConfig.js';
+import getLogger from '../config/loggerConfig.js';
+import redisClient from '../config/redisConfig.js';
 import getHash from '../utils/hasher.js';
-
+const logger = getLogger();
 const cacheMiddleware =
   (ttl = 60) =>
   async (req, res, next) => {
-    if (req.method !== 'GET') {
-      return next();
+    try {
+      if (req.method !== 'GET') {
+        return next();
+      }
+      const requestString = `${req.method}::${req.originalUrl}`;
+      const hash = getHash(requestString);
+      const cachedResponse = await redisClient.get(hash);
+      if (cachedResponse) {
+        await redisClient.expire(hash, ttl); // Refresh TTL
+        return res.status(200).send(JSON.parse(cachedResponse));
+      }
+      const originalJson = res.json.bind(res);
+      res.json = async (data) => {
+        await redisClient.setEx(hash, ttl, JSON.stringify(data));
+        return originalJson(data);
+      };
+      next();
     }
-    const requestString = `${req.method}::${req.originalUrl}:${JSON.stringify(req.body)}`;
-    const hash = getHash(requestString);
-    const redisClient = getRedisClient();
-    const cachedResponse = await redisClient.get(hash);
-    if (cachedResponse) {
-      await redisClient.expire(hash, Math.floor(ttl / 2)); // Refresh TTL
-      return res.status(200).send(JSON.parse(cachedResponse));
+    catch (error) {
+      logger.error('Cache middleware error:', error);
+      next(error);
     }
-    const originalJson = res.json.bind(res);
-    res.json = async (data) => {
-      await redisClient.setEx(hash, ttl, JSON.stringify(data));
-      return originalJson(data);
-    };
-    next();
   };
 
 export default cacheMiddleware;

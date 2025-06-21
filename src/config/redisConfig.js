@@ -1,26 +1,21 @@
 import { createClient } from 'redis';
 import getLogger from './loggerConfig.js';
+
 const logger = getLogger();
-let _redis_client = null;
 
-const getRedisClient = () => {
-  if (!_redis_client) {
-    _redis_client = createClient({
-      username: process.env.REDIS_USERNAME || 'default',
-      password: process.env.REDIS_PASSWORD,
-      socket: {
-        host: process.env.REDIS_SOCKET_HOST,
-        port: parseInt(process.env.REDIS_SOCKET_PORT, 10),
-      },
-    });
+const redisClient = createClient({
+  username: process.env.REDIS_USERNAME || 'default',
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+    host: process.env.REDIS_SOCKET_HOST,
+    port: parseInt(process.env.REDIS_SOCKET_PORT, 10),
+  },
+});
 
-    _redis_client.on('error', (err) => logger.error('Redis Client Error', err));
+redisClient.on('error', (err) => logger.error('Redis Client Error', err));
 
-    _redis_client.connect().then(() => {
-      logger.info('Redis client connected successfully!');
-    });
-  }
-  return _redis_client;
-};
-getRedisClient();
-export default getRedisClient;
+redisClient.connect()
+  .then(() => logger.info('Redis client connected successfully!'))
+  .catch((err) => logger.error('Redis client failed to connect', err));
+
+export default redisClient;

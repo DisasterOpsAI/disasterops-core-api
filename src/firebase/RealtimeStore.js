@@ -1,5 +1,6 @@
-import db from "../config/firebaseConfig.js";
-
+import db from '../config/firebaseConfig.js';
+import getLogger from '../config/loggerConfig.js';
+const logger = getLogger();
 class FirebaseRealtimeStore {
   constructor(basePath) {
     if (!basePath) throw new Error("Missing Details. Required 'basePath'.");
@@ -16,7 +17,11 @@ class FirebaseRealtimeStore {
       await ref.set(data);
       return { id, ...data };
     } catch (error) {
-      throw new Error(`Firebase Realtime Store Create Failed: ${error.message}`);
+      logger.error(`Firebase Realtime Store Create Failed: ${error.message}`, {
+        id,
+        data,
+      });
+      return `Firebase Realtime Store Create Failed: ${error.message}`;
     }
   }
 
@@ -26,7 +31,11 @@ class FirebaseRealtimeStore {
       await ref.update(data);
       return { id, ...data };
     } catch (error) {
-      throw new Error(`Firebase Realtime Store Update Failed: ${error.message}`);
+      logger.error(`Firebase Realtime Store Update Failed: ${error.message}`, {
+        id,
+        data,
+      });
+      return `Firebase Realtime Store Update Failed: ${error.message}`;
     }
   }
 
@@ -36,17 +45,23 @@ class FirebaseRealtimeStore {
       await ref.remove();
       return { id };
     } catch (error) {
-      throw new Error(`Firebase Realtime Store Delete Failed: ${error.message}`);
+      logger.error(`Firebase Realtime Store Delete Failed: ${error.message}`, {
+        id,
+      });
+      return `Firebase Realtime Store Delete Failed: ${error.message}`;
     }
   }
 
   async read(id) {
     const ref = this.buildRef(id);
     try {
-      const snapshot = await ref.once("value");
+      const snapshot = await ref.once('value');
       return snapshot.exists() ? snapshot.val() : null;
     } catch (error) {
-      throw new Error(`Firebase Realtime Store Read Failed: ${error.message}`);
+      logger.error(`Firebase Realtime Store Read Failed: ${error.message}`, {
+        id,
+      });
+      return `Firebase Realtime Store Read Failed: ${error.message}`;
     }
   }
 }

@@ -25,6 +25,4 @@ admin.initializeApp({
 });
 
 export const firestore = admin.firestore();
-
-const db = admin.database();
-export default db;
+export const db = admin.database();

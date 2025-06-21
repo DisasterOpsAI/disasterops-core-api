@@ -1,0 +1,55 @@
+# Configuration for the labeler action
+# https://github.com/actions/labeler
+
+# Add 'documentation' label to any changes within docs folders or markdown files
+documentation:
+  - '**/*.md'
+  - 'docs/**/*'
+  - 'README*'
+
+# Add 'api' label to API-related files
+api:
+  - 'src/**/*'
+  - 'lib/**/*'
+  - '**/*.py'
+  - '**/*.js'
+  - '**/*.ts'
+  - '**/*.go'
+  - '**/*.java'
+  - '**/*.cs'
+
+# Add 'dependencies' label to dependency files
+dependencies:
+  - 'requirements.txt'
+  - 'package.json'
+  - 'package-lock.json'
+  - 'Pipfile'
+  - 'Pipfile.lock'
+  - 'go.mod'
+  - 'go.sum'
+  - 'pom.xml'
+  - '*.csproj'
+
+# Add 'ci/cd' label to GitHub Actions and deployment files
+ci/cd:
+  - '.github/**/*'
+  - 'Dockerfile*'
+  - 'docker-compose*'
+
+# Add 'configuration' label to config files
+configuration:
+  - '**/*.config.js'
+  - '**/*.config.ts'
+  - '.env*'
+  - 'config/**/*'
+  - '**/*.yaml'
+  - '**/*.yml'
+  - '**/*.json'
+
+# Add 'tests' label to test files
+tests:
+  - 'test/**/*'
+  - 'tests/**/*'
+  - '**/*.test.*'
+  - '**/*.spec.*'
+  - '__tests__/**/*'

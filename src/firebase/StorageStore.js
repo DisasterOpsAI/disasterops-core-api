@@ -31,7 +31,7 @@ class StorageStore {
       return { id: existingId, name: uniqueName, path: filePath, downloadURL };
     }
 
-    const CHUNK_SIZE= 5 * 1024 * 1024; // 5MB
+    const CHUNK_SIZE= 5 * 1024 * 1024;
     const resumableUpload = fileBuffer.length > CHUNK_SIZE;
     await file.save(fileBuffer, {
       metadata: { contentType },

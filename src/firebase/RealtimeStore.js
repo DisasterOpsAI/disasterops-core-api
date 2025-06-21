@@ -1,4 +1,4 @@
-import db from '../config/firebaseConfig.js';
+import { realtimeDB } from '../config/firebaseConfig.js';
 import getLogger from '../config/loggerConfig.js';
 
 const logger = getLogger();
@@ -10,7 +10,7 @@ class FirebaseRealtimeStore {
   }
 
   buildRef(id) {
-    return db.ref(`${this.basePath}/${id}`);
+    return realtimeDB.ref(`${this.basePath}/${id}`);
   }
 
   async create(id, data) {

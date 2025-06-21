@@ -1,4 +1,4 @@
-import { firestore } from '../../config/firebaseConfig.js';
+import { firestoreDB } from '../../config/firebaseConfig.js';
 import getLogger from '../../config/loggerConfig.js';
 
 const logger = getLogger();
@@ -6,7 +6,7 @@ const logger = getLogger();
 class FirestoreStore {
   constructor(collectionName) {
     if (!collectionName) throw new Error("Missing 'collectionName'");
-    this.collection = firestore.collection(collectionName);
+    this.collection = firestoreDB.collection(collectionName);
   }
 
   async create(id, data) {

@@ -40,6 +40,7 @@ export default [
       "!**/.lintstagedrc.cjs",
       "!**/jest.config.js",
       "!**/plopfile.js",
+      "node_modules/**",
       "!**/react-shim.js",
     ],
   },

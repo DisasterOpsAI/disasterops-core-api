@@ -10,7 +10,7 @@ const getRedisClient = () => {
       password: process.env.REDIS_PASSWORD,
       socket: {
         host: process.env.REDIS_SOCKET_HOST,
-        port: process.env.REDIS_SOCKET_PORT,
+        port: parseInt(process.env.REDIS_SOCKET_PORT, 10),
       },
     });
 

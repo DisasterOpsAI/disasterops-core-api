@@ -2,137 +2,155 @@ import { storageBucket } from '../config/firebaseConfig.js';
 import getLogger from '../config/loggerConfig.js';
 
 const logger = getLogger();
-const RESUMABLE_THRESHOLD = 5 * 1024 * 1024;
-const DEFAULT_EXPIRY_MS = 3_600_000;
+const CHUNK_SIZE = 5 * 1024 * 1024; // 5 MB
 
 class StorageStore {
   constructor(baseFolderPath) {
     if (!baseFolderPath) {
-      logger.error('Initialization failed: baseFolderPath is required');
       throw new Error('StorageStore requires a baseFolderPath');
     }
     this.baseFolderPath = baseFolderPath;
-    logger.info(`StorageStore initialized with base path "${baseFolderPath}"`);
+    logger.info(
+      `StorageStore instance created – basePath="${baseFolderPath}", bucket="${storageBucket.name}"`
+    );
   }
 
   getFile(fileName) {
     const filePath = `${this.baseFolderPath}/${fileName}`;
-    return { file: storageBucket.file(filePath), filePath };
+    const file = storageBucket.file(filePath);
+    return { file, filePath };
   }
 
-  buildPublicUrl(filePath) {
+  getDownloadUrl(filePath) {
     return `https://storage.googleapis.com/${storageBucket.name}/${filePath}`;
   }
 
-  async buildSignedUrl(file, expiryMs) {
+  async generateTempPublicUrl(file, expiry) {
+    const expiryTime = expiry instanceof Date ? expiry.getTime() : expiry;
     const [url] = await file.getSignedUrl({
       action: 'read',
-      expires: Date.now() + expiryMs,
+      expires: expiryTime,
     });
     return url;
   }
 
-  async create({ fileName, dataBuffer, metadata = {}, makePublic = true, expiryMs = DEFAULT_EXPIRY_MS }) {
-    logger.info(`Creating file "${fileName}"`);
-    try {
-      const { file, filePath } = this.getFile(fileName);
-      const resumable = dataBuffer.length > RESUMABLE_THRESHOLD;
-
-      await file.save(dataBuffer, { metadata, resumable });
+  async findFileById(targetId) {
+    const [files] = await storageBucket.getFiles({
+      prefix: this.baseFolderPath,
+    });
+    for (const file of files) {
       const [meta] = await file.getMetadata();
-      const id = meta.id;
-
-      let url;
-      if (makePublic) {
-        url = this.buildPublicUrl(filePath);
-      } else {
-        url = await this.buildSignedUrl(file, expiryMs);
+      if (meta.id === targetId) {
+        return file;
       }
-
-      logger.info(`Created "${fileName}" with id ${id}`);
-      return { id, name: fileName, path: filePath, url };
-    } catch (err) {
-      logger.error(`Create failed for "${fileName}": ${err.message}`);
-      throw err;
     }
+    throw new Error(`File not found: id=${targetId}`);
   }
 
-  async read(fileName) {
-    logger.info(`Reading file "${fileName}"`);
-    try {
-      const { file, filePath } = this.getFile(fileName);
-      const [exists] = await file.exists();
-      if (!exists) {
-        logger.warn(`Read: "${fileName}" not found`);
-        return null;
-      }
+  async create({ fileName, fileBuffer, metadata = {}, makePublic = false }) {
+    const { file, filePath } = this.getFile(fileName);
+    const [exists] = await file.exists();
 
+    if (exists) {
       const [meta] = await file.getMetadata();
-      const id = meta.id;
-      const url = this.buildPublicUrl(filePath);
+      const existingId = meta.id;
+      const existingMd = meta.metadata || {};
 
-      logger.info(`Read "${fileName}" (id ${id})`);
-      return { id, name: fileName, path: filePath, url };
-    } catch (err) {
-      logger.error(`Read failed for "${fileName}": ${err.message}`);
-      throw err;
+      logger.warn(
+        `File already exists (id=${existingId}), returning existing URL`
+      );
+      return {
+        id: existingId,
+        name: fileName,
+        path: filePath,
+        downloadURL: this.getDownloadUrl(filePath),
+        metadata: existingMd,
+      };
     }
+
+    const resumable = fileBuffer.length > CHUNK_SIZE;
+    await file.save(fileBuffer, { metadata, resumable });
+
+    const [uploadedMeta] = await file.getMetadata();
+    const fileId = uploadedMeta.id;
+    const newMd = uploadedMeta.metadata || {};
+
+    let downloadURL;
+    if (makePublic) {
+      await file.makePublic();
+      downloadURL = this.getDownloadUrl(filePath);
+    }
+
+    logger.info(`File uploaded (id=${fileId}): ${fileName}`);
+    return {
+      id: fileId,
+      name: fileName,
+      path: filePath,
+      downloadURL,
+      metadata: newMd,
+    };
   }
 
-  async update({ fileName, dataBuffer, metadata = {}, makePublic = true, expiryMs = DEFAULT_EXPIRY_MS }) {
-    logger.info(`Updating file "${fileName}"`);
-    try {
-      const { file, filePath } = this.getFile(fileName);
-      const [exists] = await file.exists();
-      if (!exists) {
-        logger.warn(`Update: "${fileName}" not found`);
-        return null;
-      }
+  async read(fileId) {
+    const file = await this.findFileById(fileId);
+    const filePath = file.name;
+    const fileName = filePath.split('/').pop();
+    const [meta] = await file.getMetadata();
+    const md = meta.metadata || {};
 
-      const [meta] = await file.getMetadata();
-      const existingMeta = meta.metadata || {};
-      const combinedMeta = { ...existingMeta, ...metadata };
-      const resumable    = dataBuffer.length > RESUMABLE_THRESHOLD;
-
-      await file.save(dataBuffer, { metadata: combinedMeta, resumable });
-      const [newMeta] = await file.getMetadata();
-      const id = newMeta.id;
-
-      let url;
-      if (makePublic) {
-        url = this.buildPublicUrl(filePath);
-      } else {
-        url = await this.buildSignedUrl(file, expiryMs);
-      }
-
-      logger.info(`Updated "${fileName}" (id ${id})`);
-      return { id, name: fileName, path: filePath, url };
-    } catch (err) {
-      logger.error(`Update failed for "${fileName}": ${err.message}`);
-      throw err;
-    }
+    return {
+      id: fileId,
+      name: fileName,
+      path: filePath,
+      downloadURL: this.getDownloadUrl(filePath),
+      metadata: md,
+    };
   }
 
-  async delete(fileName) {
-    logger.info(`Deleting file "${fileName}"`);
-    try {
-      const { file } = this.getFile(fileName);
-      const [exists] = await file.exists();
-      if (!exists) {
-        logger.warn(`Delete: "${fileName}" not found`);
-        return null;
-      }
+  async update({ fileId, fileBuffer, metadata = {}, makePublic = false }) {
+    const file = await this.findFileById(fileId);
+    const filePath = file.name;
+    const fileName = filePath.split('/').pop();
 
-      const [meta] = await file.getMetadata();
-      const id = meta.id;
-      await file.delete();
+    const [oldMeta] = await file.getMetadata();
+    const existingMd = oldMeta.metadata || {};
+    const mergedMd = { ...existingMd, ...metadata };
+    const resumable = fileBuffer.length > CHUNK_SIZE;
 
-      logger.info(`Deleted "${fileName}" (id ${id})`);
-      return { id, name: fileName };
-    } catch (err) {
-      logger.error(`Delete failed for "${fileName}": ${err.message}`);
-      throw err;
+    await file.save(fileBuffer, { metadata: mergedMd, resumable });
+
+    const [newMeta] = await file.getMetadata();
+    const newMd = newMeta.metadata || {};
+
+    let downloadURL;
+    if (makePublic) {
+      await file.makePublic();
+      downloadURL = this.getDownloadUrl(filePath);
     }
+
+    logger.info(`File updated (id=${fileId}): ${fileName}`);
+    return {
+      id: fileId,
+      name: fileName,
+      path: filePath,
+      downloadURL,
+      metadata: newMd,
+    };
+  }
+
+  async delete(fileId) {
+    const file = await this.findFileById(fileId);
+    const filePath = file.name;
+    const fileName = filePath.split('/').pop();
+
+    await file.delete();
+    logger.info(`File deleted (id=${fileId}): ${fileName}`);
+
+    return {
+      id: fileId,
+      name: fileName,
+      path: filePath,
+    };
   }
 }
 

@@ -22,17 +22,6 @@ build:
         import { createRequire } from 'module';
         const require = createRequire(import.meta.url);
 
-package:
-  patterns:
-    - '!**/*.md'
-    - '!**/*.test.*'
-    - '!**/docs/**'
-    - '!node_modules/**'
-    - '!archive/**'
-    - '!api-tests/**'
-    - '!.github/**'
-    - '!logs/**'
-
 custom:
   dotenv:
     path: ./.env

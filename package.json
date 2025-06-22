@@ -17,6 +17,7 @@
     "sls:info": "serverless info",
     "sls:logs": "serverless logs --function app --tail",
     "sls:print": "serverless print",
+    "sls:package": "serverless package",
     "deploy": "pnpm install --prod --ignore-scripts=false && rm -rf .serverless && npx serverless deploy"
   },
   "keywords": [],

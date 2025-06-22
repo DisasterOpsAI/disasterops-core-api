@@ -2,90 +2,135 @@ import { storageBucket } from '../config/firebaseConfig.js';
 import getLogger from '../config/loggerConfig.js';
 
 const logger = getLogger();
+const RESUMABLE_THRESHOLD = 5 * 1024 * 1024;
+const DEFAULT_EXPIRY_MS = 3_600_000;
 
 class StorageStore {
   constructor(baseFolderPath) {
-    if (!baseFolderPath)
+    if (!baseFolderPath) {
+      logger.error('Initialization failed: baseFolderPath is required');
       throw new Error('StorageStore requires a baseFolderPath');
+    }
     this.baseFolderPath = baseFolderPath;
+    logger.info(`StorageStore initialized with base path "${baseFolderPath}"`);
   }
 
   getFile(fileName) {
     const filePath = `${this.baseFolderPath}/${fileName}`;
-    const file = storageBucket.file(filePath);
-    return { file, filePath };
+    return { file: storageBucket.file(filePath), filePath };
   }
 
-  async create({ fileName, fileBuffer, contentType, makePublic = true }) {
-    const uniqueId = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
-    const uniqueName = `${uniqueId}-${fileName}`;
-    const { file, filePath } = this.getFile(uniqueName);
+  buildPublicUrl(filePath) {
+    return `https://storage.googleapis.com/${storageBucket.name}/${filePath}`;
+  }
 
-    const [exists] = await file.exists();
-    if (exists) {
-      const existingId = uniqueName.split('-')[0];
-      logger.warn(
-        `File already exists (id: ${existingId}), returning URL for: ${uniqueName}`
-      );
-      const downloadURL = `https://storage.googleapis.com/${storageBucket.name}/${filePath}`;
-      return { id: existingId, name: uniqueName, path: filePath, downloadURL };
-    }
-
-    const CHUNK_SIZE= 5 * 1024 * 1024;
-    const resumableUpload = fileBuffer.length > CHUNK_SIZE;
-    await file.save(fileBuffer, {
-      metadata: { contentType },
-      resumable: resumableUpload,
+  async buildSignedUrl(file, expiryMs) {
+    const [url] = await file.getSignedUrl({
+      action: 'read',
+      expires: Date.now() + expiryMs,
     });
+    return url;
+  }
 
-    let downloadURL;
-    if (makePublic) {
-      await file.makePublic();
-      downloadURL = `https://storage.googleapis.com/${storageBucket.name}/${filePath}`;
-    } else {
-      [downloadURL] = await file.getSignedUrl({
-        action: 'read',
-        expires: Date.now() + 3600000,
-      });
+  async create({ fileName, dataBuffer, metadata = {}, makePublic = true, expiryMs = DEFAULT_EXPIRY_MS }) {
+    logger.info(`Creating file "${fileName}"`);
+    try {
+      const { file, filePath } = this.getFile(fileName);
+      const resumable = dataBuffer.length > RESUMABLE_THRESHOLD;
+
+      await file.save(dataBuffer, { metadata, resumable });
+      const [meta] = await file.getMetadata();
+      const id = meta.id;
+
+      let url;
+      if (makePublic) {
+        url = this.buildPublicUrl(filePath);
+      } else {
+        url = await this.buildSignedUrl(file, expiryMs);
+      }
+
+      logger.info(`Created "${fileName}" with id ${id}`);
+      return { id, name: fileName, path: filePath, url };
+    } catch (err) {
+      logger.error(`Create failed for "${fileName}": ${err.message}`);
+      throw err;
     }
-
-    logger.info(`File uploaded: ${uniqueName}`);
-    return { id: uniqueId, name: uniqueName, path: filePath, downloadURL };
   }
 
   async read(fileName) {
-    const { file, filePath } = this.getFile(fileName);
-    const [exists] = await file.exists();
-    if (!exists) return null;
-    const downloadURL = `https://storage.googleapis.com/${storageBucket.name}/${filePath}`;
-    const id = fileName.split('-')[0];
-    return { id, name: fileName, path: filePath, downloadURL };
+    logger.info(`Reading file "${fileName}"`);
+    try {
+      const { file, filePath } = this.getHandle(fileNFile      const [exists] = await file.exists();
+      if (!exists) {
+        logger.warn(`Read: "${fileName}" not found`);
+        return null;
+      }
+
+      const [meta] = await file.getMetadata();
+      const id = meta.id;
+      const url = this.buildPublicUrl(filePath);
+
+      logger.info(`Read "${fileName}" (id ${id})`);
+      return { id, name: fileName, path: filePath, url };
+    } catch (err) {
+      logger.error(`Read failed for "${fileName}": ${err.message}`);
+      throw err;
+    }
   }
 
-  async update({ fileName, fileBuffer, contentType }) {
-    const { file, filePath } = this.getFile(fileName);
-    const [exists] = await file.exists();
-    if (!exists) return null;
+  async update({ fileName, dataBuffer, metadata = {}, makePublic = true, expiryMs = DEFAULT_EXPIRY_MS }) {
+    logger.info(`Updating file "${fileName}"`);
+    try {
+      const { file, filePath } = this.getHandle(fileNFile      const [exists] = await file.exists();
+      if (!exists) {
+        logger.warn(`Update: "${fileName}" not found`);
+        return null;
+      }
 
-    await file.save(fileBuffer, {
-      metadata: { contentType },
-      resumable: false,
-    });
-    await file.makePublic();
-    const downloadURL = `https://storage.googleapis.com/${storageBucket.name}/${filePath}`;
-    const id = fileName.split('-')[0];
-    logger.info(`File updated: ${fileName}`);
-    return { id, name: fileName, path: filePath, downloadURL };
+      const [meta] = await file.getMetadata();
+      const existingMeta = meta.metadata || {};
+      const combinedMeta = { ...existingMeta, ...metadata };
+      const resumable    = dataBuffer.length > RESUMABLE_THRESHOLD;
+
+      await file.save(dataBuffer, { metadata: combinedMeta, resumable });
+      const [newMeta] = await file.getMetadata();
+      const id = newMeta.id;
+
+      let url;
+      if (makePublic) {
+        url = this.buildPublicUrl(filePath);
+      } else {
+        url = await this.buildSignedUrl(file, expiryMs);
+      }
+
+      logger.info(`Updated "${fileName}" (id ${id})`);
+      return { id, name: fileName, path: filePath, url };
+    } catch (err) {
+      logger.error(`Update failed for "${fileName}": ${err.message}`);
+      throw err;
+    }
   }
 
   async delete(fileName) {
-    const { file } = this.getFile(fileName);
-    const [exists] = await file.exists();
-    if (!exists) return null;
-    await file.delete();
-    const id = fileName.split('-')[0];
-    logger.info(`File deleted: ${fileName}`);
-    return { id, name: fileName };
+    logger.info(`Deleting file "${fileName}"`);
+    try {
+      const { file } = this.getFile(fileName);
+      const [exists] = await file.exists();
+      if (!exists) {
+        logger.warn(`Delete: "${fileName}" not found`);
+        return null;
+      }
+
+      const [meta] = await file.getMetadata();
+      const id = meta.id;
+      await file.delete();
+
+      logger.info(`Deleted "${fileName}" (id ${id})`);
+      return { id, name: fileName };
+    } catch (err) {
+      logger.error(`Delete failed for "${fileName}": ${err.message}`);
+      throw err;
+    }
   }
 }
 

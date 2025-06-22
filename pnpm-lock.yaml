@@ -32,21 +32,6 @@ importers:
       firebase-admin:
         specifier: ^13.4.0
         version: 13.4.0
-      serverless:
-        specifier: ^4.17.1
-        version: 4.17.1
-      serverless-esbuild:
-        specifier: ^1.55.1
-        version: 1.55.1(esbuild@0.25.5)
-      serverless-http:
-        specifier: ^3.2.0
-        version: 3.2.0
-      serverless-offline:
-        specifier: ^14.4.0
-        version: 14.4.0(serverless@4.17.1)
-      serverless-plugin-include-dependencies:
-        specifier: ^6.1.1
-        version: 6.1.1
       winston:
         specifier: ^3.17.0
         version: 3.17.0
@@ -87,6 +72,24 @@ importers:
       prettier:
         specifier: ^3.5.3
         version: 3.5.3
+      serverless:
+        specifier: ^4.17.1
+        version: 4.17.1
+      serverless-dotenv-plugin:
+        specifier: ^6.0.0
+        version: 6.0.0(serverless@4.17.1)
+      serverless-esbuild:
+        specifier: ^1.55.1
+        version: 1.55.1(esbuild@0.25.5)
+      serverless-http:
+        specifier: ^3.2.0
+        version: 3.2.0
+      serverless-offline:
+        specifier: ^14.4.0
+        version: 14.4.0(serverless@4.17.1)
+      serverless-plugin-include-dependencies:
+        specifier: ^6.1.1
+        version: 6.1.1
 
 packages:
 
@@ -1532,6 +1535,10 @@ packages:
   doctrine@2.1.0:
     resolution: {integrity: sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==}
     engines: {node: '>=0.10.0'}
+
+  dotenv-expand@10.0.0:
+    resolution: {integrity: sha512-GopVGCpVS1UKH75VKHGuQFqS1Gusej0z4FyQkPdwjil2gNIv+LNsqBlboOzpJFZKVT95GkCyWJbBSdFEFUWI2A==}
+    engines: {node: '>=12'}
 
   dotenv@16.5.0:
     resolution: {integrity: sha512-m/C+AwOAr9/W1UOIZUo232ejMNnJAJtYQjUbHoNTBNTJSvqzzDh7vnrei3o3r3m9blf6ZoDkvcw0VmozNRFJxg==}
@@ -3020,6 +3027,11 @@ packages:
   serve-static@2.2.0:
     resolution: {integrity: sha512-61g9pCh0Vnh7IutZjtLGGpTA355+OPn2TyDv/6ivP2h/AdAVX9azsoxmg2/M6nZeQZNYBEwIcsne1mJd9oQItQ==}
     engines: {node: '>= 18'}
+
+  serverless-dotenv-plugin@6.0.0:
+    resolution: {integrity: sha512-8tLVNwHfDO0sBz6+m+DLTZquRk0AZq9rzqk3kphm1iIWKfan9R7RKt4hdq3eQ0kmDoqzudjPYBEXAJ5bUNKeGQ==}
+    peerDependencies:
+      serverless: 1 || 2 || pre-3 || 3
 
   serverless-esbuild@1.55.1:
     resolution: {integrity: sha512-/tAjN1tLTj+qB9j4rwuCRil9PDJ//iBqR9IGvNoDJfFz7daqDbC2mxi1Gzx31UVG8Pm5e8oPPoXZ0GgZYKO1HQ==}
@@ -5434,6 +5446,8 @@ snapshots:
     dependencies:
       esutils: 2.0.3
 
+  dotenv-expand@10.0.0: {}
+
   dotenv@16.5.0: {}
 
   dunder-proto@1.0.1:
@@ -7218,6 +7232,13 @@ snapshots:
       send: 1.2.0
     transitivePeerDependencies:
       - supports-color
+
+  serverless-dotenv-plugin@6.0.0(serverless@4.17.1):
+    dependencies:
+      chalk: 4.1.2
+      dotenv: 16.5.0
+      dotenv-expand: 10.0.0
+      serverless: 4.17.1
 
   serverless-esbuild@1.55.1(esbuild@0.25.5):
     dependencies:

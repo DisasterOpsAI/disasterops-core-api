@@ -4,8 +4,12 @@ frameworkVersion: '4'
 provider:
   name: aws
   runtime: nodejs20.x
-  architecture: arm64
+  architecture: arm64 # Use arm64 for better performance and cost efficiency
   region: us-east-1
+
+plugins:
+  - serverless-offline
+  - serverless-dotenv-plugin
 
 build:
   esbuild:
@@ -13,34 +17,31 @@ build:
     minify: true
     sourcemap: false
     format: esm
-    platform: node
-    target: node20
-    external:
-      - aws-sdk
-    banner: 
+    banner: # Inject a runtime “require” shim into the ES Module bundle
       js: |
         import { createRequire } from 'module';
         const require = createRequire(import.meta.url);
 
 package:
-  individually: true 
   patterns:
     - '!**/*.md'
     - '!**/*.test.*'
     - '!**/docs/**'
-    - '!node_modules/aws-sdk/**'
+    - '!node_modules/**'
     - '!archive/**'
     - '!api-tests/**'
     - '!.github/**'
     - '!logs/**'
 
-plugins:
-  - serverless-offline
+custom:
+  dotenv:
+    path: ./.env
+    exclude:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
 
 functions:
   app:
     handler: src/index.handler
-    memorySize: 1024
-    timeout: 30
     events:
       - httpApi: '*'

@@ -6,7 +6,13 @@ const cacheMiddleware =
   (ttl = 60) =>
   async (req, res, next) => {
     try {
-      if (req.method !== 'GET') {
+      const authHeader = req.headers.authorization;
+      const hasValidToken =
+        authHeader &&
+        authHeader.startsWith('Bearer ') &&
+        authHeader.split(' ')[1]; // TODO: #25
+
+      if (req.method !== 'GET' || hasValidToken) {
         return next();
       }
       const requestString = `${req.method}::${req.originalUrl}`;
@@ -22,8 +28,7 @@ const cacheMiddleware =
         return originalJson(data);
       };
       next();
-    }
-    catch (error) {
+    } catch (error) {
       logger.error('Cache middleware error:', error);
       next(error);
     }

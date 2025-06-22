@@ -29,7 +29,7 @@ class StorageStore {
     const expiryTime = expiry instanceof Date ? expiry.getTime() : expiry;
     const [url] = await file.getSignedUrl({
       action: 'read',
-      expires: expiryTime,
+      expires: Date.now() + expiryTime,
     });
     return url;
   }

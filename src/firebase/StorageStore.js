@@ -60,7 +60,8 @@ class StorageStore {
   async read(fileName) {
     logger.info(`Reading file "${fileName}"`);
     try {
-      const { file, filePath } = this.getHandle(fileNFile      const [exists] = await file.exists();
+      const { file, filePath } = this.getFile(fileName);
+      const [exists] = await file.exists();
       if (!exists) {
         logger.warn(`Read: "${fileName}" not found`);
         return null;
@@ -81,7 +82,8 @@ class StorageStore {
   async update({ fileName, dataBuffer, metadata = {}, makePublic = true, expiryMs = DEFAULT_EXPIRY_MS }) {
     logger.info(`Updating file "${fileName}"`);
     try {
-      const { file, filePath } = this.getHandle(fileNFile      const [exists] = await file.exists();
+      const { file, filePath } = this.getFile(fileName);
+      const [exists] = await file.exists();
       if (!exists) {
         logger.warn(`Update: "${fileName}" not found`);
         return null;

@@ -22,6 +22,6 @@ export default async function authMiddleware(req, res, next) {
     logger.error('Unauthorized access attempt', { error: err });
     return res
       .status(401)
-      .json({ error: 'Unauthorized', message: err.message });
+      .json({ error: 'Unauthorized', message: 'An error occurred during authentication.' });
   }
 }

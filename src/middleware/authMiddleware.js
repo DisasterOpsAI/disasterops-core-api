@@ -29,7 +29,7 @@ export default async function authMiddleware(req, res, next) {
 
     return res.status(401).json({
       error: 'Unauthorized',
-      message: 'An error occurred during authentication.',
+      message: err.message,
     });
   }
 }

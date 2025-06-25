@@ -3,33 +3,63 @@ import getLogger from '../config/loggerConfig.js';
 
 const logger = getLogger();
 
-export default async function authMiddleware(req, res, next) {
-  const header = req.headers.authorization || '';
+const ROLES = {
+  VOLUNTEER: 'volunteer',
+  FIRST_RESPONDER: 'first_responder',
+};
 
-  if (!header.startsWith('Bearer ')) {
-    return res
-      .status(401)
-      .json({ error: 'Unauthorized', message: 'No token provided' });
-  }
+export default function authMiddleware(
+  allowedRoles = [ROLES.VOLUNTEER, ROLES.FIRST_RESPONDER]
+) {
+  return async function (req, res, next) {
+    const header = req.headers.authorization || '';
 
-  const idToken = header.slice(7).trim();
+    if (!header.startsWith('Bearer ')) {
+      return res
+        .status(401)
+        .json({ error: 'Unauthorized', message: 'No token provided' });
+    }
 
-  try {
-    const decoded = await getAuth().verifyIdToken(idToken);
-    req.user = { uid: decoded.uid, ...decoded };
-    res.locals.uid = decoded.uid;
-    return next();
-  } catch (err) {
-    logger.error('Unauthorized access attempt', {
-      error: err.message,
-      stack: err.stack,
-      path: req.path,
-      method: req.method,
-    });
+    const idToken = header.slice(7).trim();
 
-    return res.status(401).json({
-      error: 'Unauthorized',
-      message: err.message,
-    });
-  }
+    try {
+      const decoded = await getAuth().verifyIdToken(idToken);
+      const uid = decoded.uid;
+      // req.user = { uid: decoded.uid, ...decoded };
+      const userRecord = await getAuth().getUser(uid);
+      req.user = userRecord;
+      res.locals.uid = uid;
+
+      if (!userRecord.customClaims || !userRecord.customClaims.role) {
+        logger.error('Forbidden access attempt', {
+          uid,
+          role: 'no role assigned',
+        });
+        return res
+          .status(403)
+          .json({ error: 'Forbidden', message: 'No role assigned' });
+      }
+
+      const role = userRecord.customClaims.role;
+      if (!allowedRoles.includes(role)) {
+        logger.error('Forbidden access attempt', { uid, role });
+        return res
+          .status(403)
+          .json({ error: 'Forbidden', message: 'Insufficient role' });
+      }
+
+      return next();
+    } catch (err) {
+      logger.error('Unauthorized access attempt', {
+        error: err.message,
+        stack: err.stack,
+        path: req.path,
+        method: req.method,
+      });
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: err.message,
+      });
+    }
+  };
 }

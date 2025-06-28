@@ -1,12 +1,8 @@
 import { getAuth } from 'firebase-admin/auth';
 import getLogger from '../config/loggerConfig.js';
+import { ROLES } from '../config/rolesConfig.js';
 
 const logger = getLogger();
-
-const ROLES = {
-  VOLUNTEER: 'volunteer',
-  FIRST_RESPONDER: 'first_responder',
-};
 
 export default function authMiddleware(
   allowedRoles = [ROLES.VOLUNTEER, ROLES.FIRST_RESPONDER]
@@ -23,9 +19,8 @@ export default function authMiddleware(
     const idToken = header.slice(7).trim();
 
     try {
-      const decoded = await getAuth().verifyIdToken(idToken);
+      const decoded = await getAuth().verifyIdToken(idToken); 
       const uid = decoded.uid;
-      // req.user = { uid: decoded.uid, ...decoded };
       const userRecord = await getAuth().getUser(uid);
       req.user = userRecord;
       res.locals.uid = uid;

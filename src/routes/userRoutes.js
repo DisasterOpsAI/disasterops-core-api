@@ -6,8 +6,8 @@ import FirebaseRealtimeStore from '../stores/RealtimeStore.js';
 import { ROLES } from '../config/rolesConfig.js';
 import getLogger from '../config/loggerConfig.js';
 import {
-  firstResponderSchema,
-  volunteerSchema,
+  initialFirstResponderCreationSchema,
+  initialVolunteerCreationSchema,
   locationUpdateSchema,
 } from '../validation/userSchemas.js';
 
@@ -21,24 +21,25 @@ const locationsStore = new FirebaseRealtimeStore('userLocations');
 router.post(
   '/first-responders',
   authMiddleware([ROLES.FIRST_RESPONDER]),
-  validateRequest(firstResponderSchema),
+  validateRequest(initialFirstResponderCreationSchema),
   async (req, res) => {
-    const { userId, name, skills, contact } = req.body;
-    const createdAt = new Date().toISOString();
+    const userId = res.locals.uid;
+    const { name, skills, contact } = req.body;
+
     try {
-      await firstRespondersStore.create(userId, {
+      const result = await firstRespondersStore.create(userId, {
         name,
         skills,
         contact,
-        createdAt,
       });
-      res.status(201).json({ userId, createdAt });
+      const createdAt = result.createdAt.toDate().toISOString();
+      return res.status(201).json({ userId, createdAt });
     } catch (err) {
-      logger.error('create first responder failed', {
+      logger.error('Create first responder failed', {
         userId,
         err: err.message,
       });
-      res.status(500).json({ error: 'Internal Server Error' });
+      return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -46,21 +47,22 @@ router.post(
 router.post(
   '/volunteers',
   authMiddleware([ROLES.VOLUNTEER]),
-  validateRequest(volunteerSchema),
+  validateRequest(initialVolunteerCreationSchema),
   async (req, res) => {
-    const { userId, name, skills, contact } = req.body;
-    const createdAt = new Date().toISOString();
+    const userId = res.locals.uid;
+    const { name, skills, contact } = req.body;
+
     try {
-      await volunteersStore.create(userId, {
+      const result = await volunteersStore.create(userId, {
         name,
         skills,
         contact,
-        createdAt,
       });
-      res.status(201).json({ userId, createdAt });
+      const createdAt = result.createdAt.toDate().toISOString();
+      return res.status(201).json({ userId, createdAt });
     } catch (err) {
-      logger.error('create volunteer failed', { userId, err: err.message });
-      res.status(500).json({ error: 'Internal Server Error' });
+      logger.error('Create volunteer failed', { userId, err: err.message });
+      return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -72,14 +74,99 @@ router.put(
   async (req, res) => {
     const { userId } = req.params;
     const { lat, lng, timestamp } = req.body;
+
+    if (res.locals.uid !== userId) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'You can only update your own location',
+      });
+    }
+
     try {
       await locationsStore.update(userId, { lat, lng, timestamp });
-      res.json({ status: 'ok' });
+      return res.json({ status: 'ok' });
     } catch (err) {
-      logger.error('update location failed', { userId, err: err.message });
-      res.status(500).json({ error: 'Internal Server Error' });
+      logger.error('Update location failed', { userId, err: err.message });
+      return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
+
+router.get(
+  '/first-responders/:userId',
+  authMiddleware([ROLES.FIRST_RESPONDER]),
+  async (req, res) => {
+    const { userId } = req.params;
+    try {
+      const profile = await firstRespondersStore.read(userId);
+      if (!profile) {
+        return res.status(404).json({ error: 'Not Found' });
+      }
+      return res.json(profile);
+    } catch (err) {
+      logger.error('Read first responder failed', { userId, err: err.message });
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+);
+
+router.get(
+  '/volunteers/:userId',
+  authMiddleware([ROLES.VOLUNTEER]),
+  async (req, res) => {
+    const { userId } = req.params;
+    try {
+      const profile = await volunteersStore.read(userId);
+      if (!profile) {
+        return res.status(404).json({ error: 'Not Found' });
+      }
+      return res.json(profile);
+    } catch (err) {
+      logger.error('Read volunteer failed', { userId, err: err.message });
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+);
+
+router.put(
+  '/first-responders/:userId',
+  authMiddleware([ROLES.FIRST_RESPONDER]),
+  validateRequest(initialFirstResponderCreationSchema),
+  async (req, res) => {
+    const { userId } = req.params;
+    const updates = req.body;
+
+    try {
+      await firstRespondersStore.update(userId, updates);
+      return res.json({ status: 'ok' });
+    } catch (err) {
+      logger.error('Update first responder failed', {
+        userId,
+        err: err.message,
+      });
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+);
+
+router.put(
+  '/volunteers/:userId',
+  authMiddleware([ROLES.VOLUNTEER]),
+  validateRequest(initialVolunteerCreationSchema),
+  async (req, res) => {
+    const { userId } = req.params;
+    const updates = req.body;
+
+    try {
+      await volunteersStore.update(userId, updates);
+      return res.json({ status: 'ok' });
+    } catch (err) {
+      logger.error('Update volunteer failed', { userId, err: err.message });
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+);
+
+// TODO: implement DELETE /first-responders/:userId and DELETE /volunteers/:userId
 
 export default router;

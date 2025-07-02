@@ -2,13 +2,12 @@ import { storageBucket } from '../config/firebaseConfig.js';
 import getLogger from '../config/loggerConfig.js';
 
 const logger = getLogger();
-const CHUNK_SIZE = 5 * 1024 * 1024; // 5 MB
+const CHUNK_SIZE = 5 * 1024 * 1024;
 
 class StorageStore {
   constructor(baseFolderPath) {
-    if (!baseFolderPath) {
+    if (!baseFolderPath)
       throw new Error('StorageStore requires a baseFolderPath');
-    }
     this.baseFolderPath = baseFolderPath;
     logger.info(
       `StorageStore instance created – basePath="${baseFolderPath}", bucket="${storageBucket.name}"`
@@ -40,9 +39,7 @@ class StorageStore {
     });
     for (const file of files) {
       const [meta] = await file.getMetadata();
-      if (meta.id === targetId) {
-        return file;
-      }
+      if (meta.id === targetId) return file;
     }
     throw new Error(`File not found: id=${targetId}`);
   }
@@ -50,12 +47,10 @@ class StorageStore {
   async create({ fileName, fileBuffer, metadata = {}, makePublic = false }) {
     const { file, filePath } = this.getFile(fileName);
     const [exists] = await file.exists();
-
     if (exists) {
       const [meta] = await file.getMetadata();
       const existingId = meta.id;
       const existingMd = meta.metadata || {};
-
       logger.warn(
         `File already exists (id=${existingId}), returning existing URL`
       );
@@ -67,20 +62,16 @@ class StorageStore {
         metadata: existingMd,
       };
     }
-
     const resumable = fileBuffer.length > CHUNK_SIZE;
     await file.save(fileBuffer, { metadata, resumable });
-
     const [uploadedMeta] = await file.getMetadata();
     const fileId = uploadedMeta.id;
     const newMd = uploadedMeta.metadata || {};
-
     let downloadURL;
     if (makePublic) {
       await file.makePublic();
       downloadURL = this.getDownloadUrl(filePath);
     }
-
     logger.info(`File uploaded (id=${fileId}): ${fileName}`);
     return {
       id: fileId,
@@ -97,7 +88,6 @@ class StorageStore {
     const fileName = filePath.split('/').pop();
     const [meta] = await file.getMetadata();
     const md = meta.metadata || {};
-
     return {
       id: fileId,
       name: fileName,
@@ -111,23 +101,18 @@ class StorageStore {
     const file = await this.findFileById(fileId);
     const filePath = file.name;
     const fileName = filePath.split('/').pop();
-
     const [oldMeta] = await file.getMetadata();
     const existingMd = oldMeta.metadata || {};
     const mergedMd = { ...existingMd, ...metadata };
     const resumable = fileBuffer.length > CHUNK_SIZE;
-
     await file.save(fileBuffer, { metadata: mergedMd, resumable });
-
     const [newMeta] = await file.getMetadata();
     const newMd = newMeta.metadata || {};
-
     let downloadURL;
     if (makePublic) {
       await file.makePublic();
       downloadURL = this.getDownloadUrl(filePath);
     }
-
     logger.info(`File updated (id=${fileId}): ${fileName}`);
     return {
       id: fileId,
@@ -142,10 +127,8 @@ class StorageStore {
     const file = await this.findFileById(fileId);
     const filePath = file.name;
     const fileName = filePath.split('/').pop();
-
     await file.delete();
     logger.info(`File deleted (id=${fileId}): ${fileName}`);
-
     return {
       id: fileId,
       name: fileName,

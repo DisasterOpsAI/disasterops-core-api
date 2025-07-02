@@ -1,3 +1,4 @@
+import admin from 'firebase-admin';
 import { firestoreDB } from '../../config/firebaseConfig.js';
 import getLogger from '../../config/loggerConfig.js';
 
@@ -8,11 +9,15 @@ class FirestoreStore {
     if (!collectionName) throw new Error("Missing 'collectionName'");
     this.collection = firestoreDB.collection(collectionName);
   }
-
   async create(id, data) {
     try {
-      await this.collection.doc(id).set(data);
-      return { id, ...data };
+      await this.collection.doc(id).set({
+        ...data,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      const snap = await this.collection.doc(id).get();
+      return { id: snap.id, ...snap.data() };
     } catch (err) {
       logger.error(`FirestoreStore.create failed: ${err.message}`, {
         id,

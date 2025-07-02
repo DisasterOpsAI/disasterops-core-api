@@ -1,3 +1,4 @@
+import admin from 'firebase-admin';
 import { realtimeDB } from '../config/firebaseConfig.js';
 import getLogger from '../config/loggerConfig.js';
 
@@ -16,8 +17,13 @@ class FirebaseRealtimeStore {
   async create(id, data) {
     const ref = this.buildRef(id);
     try {
-      await ref.set(data);
-      return { id, ...data };
+      await ref.set({
+        ...data,
+        createdAt: admin.database.ServerValue.TIMESTAMP,
+      });
+      const snapshot = await ref.once('value');
+      const val = snapshot.val() || {};
+      return { id, ...val };
     } catch (error) {
       logger.error(`Firebase Realtime Store Create Failed: ${error.message}`, {
         id,
@@ -58,7 +64,8 @@ class FirebaseRealtimeStore {
     const ref = this.buildRef(id);
     try {
       const snapshot = await ref.once('value');
-      return snapshot.exists() ? snapshot.val() : null;
+      const val = snapshot.val();
+      return val ? { id, ...val } : null;
     } catch (error) {
       logger.error(`Firebase Realtime Store Read Failed: ${error.message}`, {
         id,

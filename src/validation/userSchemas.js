@@ -1,13 +1,13 @@
 import Joi from 'joi';
 
-export const firstResponderSchema = Joi.object({
+export const initialFirstResponderCreationSchema = Joi.object({
   userId: Joi.string().uuid().required(),
   name: Joi.string().min(3).max(50).required(),
   skills: Joi.array().items(Joi.string()).min(1).required(),
   contact: Joi.string().email().required(),
 });
 
-export const volunteerSchema = Joi.object({
+export const initialVolunteerCreationSchema = Joi.object({
   userId: Joi.string().uuid().required(),
   name: Joi.string().min(3).max(50).required(),
   skills: Joi.array().items(Joi.string()).min(1).required(),

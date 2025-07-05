@@ -20,10 +20,20 @@ class StorageStore {
       id: meta.id,
       name: meta.name.split('/').pop(),
       path: meta.name,
+      fullPath: meta.name,
       size: meta.size,
       contentType: meta.contentType,
+      cacheControl: meta.cacheControl,
+      contentDisposition: meta.contentDisposition,
+      contentEncoding: meta.contentEncoding,
+      contentLanguage: meta.contentLanguage,
       createdAt: meta.timeCreated,
       updatedAt: meta.updated,
+      md5Hash: meta.md5Hash,
+      etag: meta.etag,
+      generation: meta.generation,
+      metageneration: meta.metageneration,
+      storageClass: meta.storageClass,
       custom: meta.metadata || {},
     };
   }
@@ -175,6 +185,181 @@ class StorageStore {
         fileName,
       });
       throw new Error(`StorageStore.delete failed: ${error.message}`);
+    }
+  }
+
+  async getAdvancedMetadata(fileName) {
+    try {
+      const file = this.getFile(fileName);
+      const [meta] = await file.getMetadata();
+      const [isPublic] = await file.isPublic();
+      const [exists] = await file.exists();
+
+      return {
+        metadata: {
+          ...this._formatFileMetadata(meta),
+          exists,
+          isPublic,
+          bucket: storageBucket.name,
+          downloadTokens: meta.downloadTokens,
+          kmsKeyName: meta.kmsKeyName,
+          eventBasedHold: meta.eventBasedHold,
+          temporaryHold: meta.temporaryHold,
+          retentionExpirationTime: meta.retentionExpirationTime,
+          retrievedAt: new Date().toISOString(),
+        },
+      };
+    } catch (error) {
+      logger.error(`StorageStore.getAdvancedMetadata failed: ${error.message}`, {
+        fileName,
+      });
+      throw new Error(`StorageStore.getAdvancedMetadata failed: ${error.message}`);
+    }
+  }
+
+  async updateMetadata(fileName, metadata) {
+    try {
+      const file = this.getFile(fileName);
+      const [currentMeta] = await file.getMetadata();
+      
+      const updatedMetadata = {
+        ...currentMeta.metadata,
+        ...metadata,
+      };
+
+      await file.setMetadata({ metadata: updatedMetadata });
+      const [newMeta] = await file.getMetadata();
+      
+      logger.info(`File metadata updated (id=${newMeta.id}): ${fileName}`);
+      return {
+        metadata: this._formatFileMetadata(newMeta),
+      };
+    } catch (error) {
+      logger.error(`StorageStore.updateMetadata failed: ${error.message}`, {
+        fileName,
+        metadata,
+      });
+      throw new Error(`StorageStore.updateMetadata failed: ${error.message}`);
+    }
+  }
+
+  async getFileSize(fileName) {
+    try {
+      const file = this.getFile(fileName);
+      const [meta] = await file.getMetadata();
+      return {
+        metadata: {
+          id: meta.id,
+          name: fileName,
+          size: meta.size,
+          sizeFormatted: this._formatFileSize(meta.size),
+        },
+      };
+    } catch (error) {
+      logger.error(`StorageStore.getFileSize failed: ${error.message}`, {
+        fileName,
+      });
+      throw new Error(`StorageStore.getFileSize failed: ${error.message}`);
+    }
+  }
+
+  async listFilesWithMetadata(options = {}) {
+    try {
+      const { prefix = this.baseFolderPath, maxResults = 1000 } = options;
+      const [files] = await storageBucket.getFiles({
+        prefix,
+        maxResults,
+      });
+
+      const filesWithMetadata = await Promise.all(
+        files.map(async (file) => {
+          try {
+            const [meta] = await file.getMetadata();
+            const [isPublic] = await file.isPublic();
+            return this._formatFile(meta, isPublic);
+          } catch (error) {
+            logger.warn(`Failed to get metadata for file ${file.name}: ${error.message}`);
+            return null;
+          }
+        })
+      );
+
+      return {
+        files: filesWithMetadata.filter(Boolean),
+        metadata: {
+          totalFiles: filesWithMetadata.length,
+          prefix,
+          retrievedAt: new Date().toISOString(),
+        },
+      };
+    } catch (error) {
+      logger.error(`StorageStore.listFilesWithMetadata failed: ${error.message}`, {
+        options,
+      });
+      throw new Error(`StorageStore.listFilesWithMetadata failed: ${error.message}`);
+    }
+  }
+
+  async copyFile(sourceFileName, destinationFileName, options = {}) {
+    try {
+      const sourceFile = this.getFile(sourceFileName);
+      const destFile = this.getFile(destinationFileName);
+      
+      await sourceFile.copy(destFile, options);
+      
+      const [sourceMeta] = await sourceFile.getMetadata();
+      const [destMeta] = await destFile.getMetadata();
+      
+      logger.info(`File copied from ${sourceFileName} to ${destinationFileName}`);
+      return {
+        source: this._formatFileMetadata(sourceMeta),
+        destination: this._formatFileMetadata(destMeta),
+      };
+    } catch (error) {
+      logger.error(`StorageStore.copyFile failed: ${error.message}`, {
+        sourceFileName,
+        destinationFileName,
+      });
+      throw new Error(`StorageStore.copyFile failed: ${error.message}`);
+    }
+  }
+
+  _formatFileSize(bytes) {
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    if (bytes === 0) return '0 Bytes';
+    const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)), 10);
+    return `${Math.round(bytes / Math.pow(1024, i) * 100) / 100} ${sizes[i]}`;
+  }
+
+  async getStorageUsage() {
+    try {
+      const [files] = await storageBucket.getFiles({ prefix: this.baseFolderPath });
+      let totalSize = 0;
+      let fileCount = 0;
+
+      for (const file of files) {
+        try {
+          const [meta] = await file.getMetadata();
+          totalSize += parseInt(meta.size || 0, 10);
+          fileCount++;
+        } catch (error) {
+          logger.warn(`Failed to get size for file ${file.name}: ${error.message}`);
+        }
+      }
+
+      return {
+        metadata: {
+          totalFiles: fileCount,
+          totalSize,
+          totalSizeFormatted: this._formatFileSize(totalSize),
+          basePath: this.baseFolderPath,
+          bucket: storageBucket.name,
+          calculatedAt: new Date().toISOString(),
+        },
+      };
+    } catch (error) {
+      logger.error(`StorageStore.getStorageUsage failed: ${error.message}`);
+      throw new Error(`StorageStore.getStorageUsage failed: ${error.message}`);
     }
   }
 }

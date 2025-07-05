@@ -4,9 +4,9 @@ import getLogger from '../config/loggerConfig.js';
 
 const logger = getLogger();
 
-class FirebaseRealtimeStore {
+class RealtimeStore {
   constructor(basePath) {
-    if (!basePath) throw new Error("Missing Details. Required 'basePath'.");
+    if (!basePath) throw new Error("Missing 'basePath'.");
     this.basePath = basePath;
   }
 
@@ -14,11 +14,16 @@ class FirebaseRealtimeStore {
     return realtimeDB.ref(`${this.basePath}/${id}`);
   }
 
-  _getMetadata(id, data) {
+  _formatSnapshot(snapshot) {
+    const data = snapshot.val();
+    const { createdAt, updatedAt, ...userData } = data;
     return {
-      id,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
+      data: userData,
+      metadata: {
+        id: snapshot.key,
+        createdAt,
+        updatedAt,
+      },
     };
   }
 
@@ -31,20 +36,40 @@ class FirebaseRealtimeStore {
         updatedAt: admin.database.ServerValue.TIMESTAMP,
       });
       const snapshot = await ref.once('value');
-      const val = snapshot.val();
-      const { createdAt, updatedAt, ...userData } = val;
-      return {
-        data: userData,
-        metadata: this._getMetadata(id, val),
-      };
+      return this._formatSnapshot(snapshot);
     } catch (error) {
-      logger.error(`Firebase Realtime Store Create Failed: ${error.message}`, {
+      logger.error(`RealtimeStore.create failed: ${error.message}`, {
         id,
         data,
       });
-      throw new Error(
-        `Firebase Realtime Store Create Failed: ${error.message}`
-      );
+      throw new Error(`RealtimeStore.create failed: ${error.message}`);
+    }
+  }
+
+  async read(id) {
+    const ref = this.buildRef(id);
+    try {
+      const snapshot = await ref.once('value');
+      if (!snapshot.exists()) return null;
+      return this._formatSnapshot(snapshot);
+    } catch (error) {
+      logger.error(`RealtimeStore.read failed: ${error.message}`, { id });
+      throw new Error(`RealtimeStore.read failed: ${error.message}`);
+    }
+  }
+
+  async readMetadata(id) {
+    const ref = this.buildRef(id);
+    try {
+      const snapshot = await ref.once('value');
+      if (!snapshot.exists()) return null;
+      const { metadata } = this._formatSnapshot(snapshot);
+      return { metadata };
+    } catch (error) {
+      logger.error(`RealtimeStore.readMetadata failed: ${error.message}`, {
+        id,
+      });
+      throw new Error(`RealtimeStore.readMetadata failed: ${error.message}`);
     }
   }
 
@@ -56,20 +81,13 @@ class FirebaseRealtimeStore {
         updatedAt: admin.database.ServerValue.TIMESTAMP,
       });
       const snapshot = await ref.once('value');
-      const val = snapshot.val();
-      const { createdAt, updatedAt, ...userData } = val;
-      return {
-        data: userData,
-        metadata: this._getMetadata(id, val),
-      };
+      return this._formatSnapshot(snapshot);
     } catch (error) {
-      logger.error(`Firebase Realtime Store Update Failed: ${error.message}`, {
+      logger.error(`RealtimeStore.update failed: ${error.message}`, {
         id,
         data,
       });
-      throw new Error(
-        `Firebase Realtime Store Update Failed: ${error.message}`
-      );
+      throw new Error(`RealtimeStore.update failed: ${error.message}`);
     }
   }
 
@@ -77,36 +95,14 @@ class FirebaseRealtimeStore {
     const ref = this.buildRef(id);
     try {
       await ref.remove();
-      return { metadata: { id } };
+      return { metadata: { id, deleted: true } };
     } catch (error) {
-      logger.error(`Firebase Realtime Store Delete Failed: ${error.message}`, {
+      logger.error(`RealtimeStore.delete failed: ${error.message}`, {
         id,
       });
-      throw new Error(
-        `Firebase Realtime Store Delete Failed: ${error.message}`
-      );
-    }
-  }
-
-  async read(id) {
-    const ref = this.buildRef(id);
-    try {
-      const snapshot = await ref.once('value');
-      if (!snapshot.exists()) return null;
-
-      const val = snapshot.val();
-      const { createdAt, updatedAt, ...userData } = val;
-      return {
-        data: userData,
-        metadata: this._getMetadata(id, val),
-      };
-    } catch (error) {
-      logger.error(`Firebase Realtime Store Read Failed: ${error.message}`, {
-        id,
-      });
-      throw new Error(`Firebase Realtime Store Read Failed: ${error.message}`);
+      throw new Error(`RealtimeStore.delete failed: ${error.message}`);
     }
   }
 }
 
-export default FirebaseRealtimeStore;
+export default RealtimeStore;

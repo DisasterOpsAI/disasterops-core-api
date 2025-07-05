@@ -9,28 +9,31 @@ class FirestoreStore {
     if (!collectionName) throw new Error("Missing 'collectionName'");
     this.collection = firestoreDB.collection(collectionName);
   }
-  _getMetadata(id, data) {
+
+  _formatDoc(doc) {
+    const docData = doc.data();
+    const { createdAt, updatedAt, ...data } = docData;
     return {
-      id,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
+      data,
+      metadata: {
+        id: doc.id,
+        createdAt: createdAt || doc.createTime,
+        updatedAt: updatedAt || doc.updateTime,
+        fromCache: doc.metadata.fromCache,
+      },
     };
   }
 
   async create(id, data) {
     try {
-      await this.collection.doc(id).set({
+      const docRef = this.collection.doc(id);
+      await docRef.set({
         ...data,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
-      const snap = await this.collection.doc(id).get();
-      const docData = snap.data();
-      const { createdAt, updatedAt, ...userData } = docData;
-      return {
-        data: userData,
-        metadata: this._getMetadata(snap.id, docData),
-      };
+      const doc = await docRef.get();
+      return this._formatDoc(doc);
     } catch (err) {
       logger.error(`FirestoreStore.create failed: ${err.message}`, {
         id,
@@ -44,31 +47,36 @@ class FirestoreStore {
     try {
       const doc = await this.collection.doc(id).get();
       if (!doc.exists) return null;
-      const docData = doc.data();
-      const { createdAt, updatedAt, ...userData } = docData;
-      return {
-        data: userData,
-        metadata: this._getMetadata(doc.id, docData),
-      };
+      return this._formatDoc(doc);
     } catch (err) {
       logger.error(`FirestoreStore.read failed: ${err.message}`, { id });
       throw new Error(`FirestoreStore.read failed: ${err.message}`);
     }
   }
 
+  async readMetadata(id) {
+    try {
+      const doc = await this.collection.doc(id).get();
+      if (!doc.exists) return null;
+      const { metadata } = this._formatDoc(doc);
+      return { metadata };
+    } catch (err) {
+      logger.error(`FirestoreStore.readMetadata failed: ${err.message}`, {
+        id,
+      });
+      throw new Error(`FirestoreStore.readMetadata failed: ${err.message}`);
+    }
+  }
+
   async update(id, data) {
     try {
-      await this.collection.doc(id).update({
+      const docRef = this.collection.doc(id);
+      await docRef.update({
         ...data,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
-      const snap = await this.collection.doc(id).get();
-      const docData = snap.data();
-      const { createdAt, updatedAt, ...userData } = docData;
-      return {
-        data: userData,
-        metadata: this._getMetadata(snap.id, docData),
-      };
+      const doc = await docRef.get();
+      return this._formatDoc(doc);
     } catch (err) {
       logger.error(`FirestoreStore.update failed: ${err.message}`, {
         id,
@@ -81,7 +89,7 @@ class FirestoreStore {
   async delete(id) {
     try {
       await this.collection.doc(id).delete();
-      return { metadata: { id } };
+      return { metadata: { id, deleted: true } };
     } catch (err) {
       logger.error(`FirestoreStore.delete failed: ${err.message}`, { id });
       throw new Error(`FirestoreStore.delete failed: ${err.message}`);

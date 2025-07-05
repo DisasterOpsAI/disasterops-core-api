@@ -1,0 +1,37 @@
+meta {
+  name: Update Task
+  type: http
+  seq: 5
+}
+
+put {
+  url: http://localhost:3000/api/tasks/{{taskId}}
+  body: json
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer test-token
+}
+
+body:json {
+  {
+    "status": "completed",
+    "notes": "Delivered supplies safely.",
+    "attachments": [
+      {
+        "type": "image",
+        "url": "https://example.com/image.jpg"
+      }
+    ]
+  }
+}
+
+tests {
+  test("should update task successfully", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody()).to.have.property('taskId');
+    expect(res.getBody()).to.have.property('updatedAt');
+    expect(res.getBody().taskId).to.equal(bru.getEnvVar('taskId'));
+  });
+}

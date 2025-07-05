@@ -1,5 +1,5 @@
-import { firestoreDB } from '../../config/firebaseConfig.js';
-import getLogger from '../../config/loggerConfig.js';
+import { firestoreDB } from '../config/firebaseConfig.js';
+import getLogger from '../config/loggerConfig.js';
 
 const logger = getLogger();
 

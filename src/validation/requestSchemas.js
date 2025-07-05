@@ -21,7 +21,26 @@ const updateRequestSchema = Joi.object({
   newAttachments: Joi.array().items(attachmentSchema).default([]),
 }).or('additionalInfo', 'newAttachments');
 
-module.exports = {
+const resourceAllocationSchema = Joi.object({
+  resourceId: Joi.string().required(),
+  quantity: Joi.number().positive().required(),
+});
+
+const createTaskSchema = Joi.object({
+  requestId: Joi.string().required(),
+  assigneeId: Joi.string().required(),
+  resourceAllocations: Joi.array().items(resourceAllocationSchema).required(),
+});
+
+const updateTaskSchema = Joi.object({
+  status: Joi.string().valid('pending', 'in_progress', 'completed').optional(),
+  notes: Joi.string().optional(),
+  attachments: Joi.array().items(attachmentSchema).optional(),
+}).or('status', 'notes', 'attachments');
+
+export {
   createRequestSchema,
   updateRequestSchema,
+  createTaskSchema,
+  updateTaskSchema,
 };

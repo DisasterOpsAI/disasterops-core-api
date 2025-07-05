@@ -38,9 +38,9 @@ The backend is built with **Node.js** and **Express**, and integrates with **Fir
 | Authentication   | Firebase Auth                                               |
 | AI Logic         | External AI Agent API (maintained in a separate repository) |
 
+```
 ## Folder Structure
 
-```
 my-express-backend/
 ├── src/
 │   ├── config/

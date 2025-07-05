@@ -1,0 +1,45 @@
+meta {
+  name: Test Task Flow
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://localhost:3000/api/tasks
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer test-token
+}
+
+body:json {
+  {
+    "requestId": "req-test-123",
+    "assigneeId": "user-test-456",
+    "resourceAllocations": [
+      {
+        "resourceId": "res-water-001",
+        "quantity": 50
+      },
+      {
+        "resourceId": "res-food-002", 
+        "quantity": 25
+      }
+    ]
+  }
+}
+
+tests {
+  test("should create task successfully", function() {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody()).to.have.property('taskId');
+    expect(res.getBody()).to.have.property('createdAt');
+    expect(res.getBody().taskId).to.match(/^task-/);
+    
+    // Store taskId for subsequent tests
+    bru.setVar('createdTaskId', res.getBody().taskId);
+  });
+}

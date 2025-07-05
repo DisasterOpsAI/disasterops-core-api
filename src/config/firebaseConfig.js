@@ -22,10 +22,11 @@ const serviceAccount = {
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: process.env.FIREBASE_DATABASE_URL,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
 });
 
 const firestoreDB = admin.firestore();
 const realtimeDB = admin.database();
-const storageBucket = admin.storage().bucket();
+const storageBucket = process.env.FIREBASE_STORAGE_BUCKET ? admin.storage().bucket() : null;
 
 export {firestoreDB, realtimeDB, storageBucket};

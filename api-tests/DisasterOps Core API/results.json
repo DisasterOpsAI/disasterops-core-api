@@ -1,0 +1,318 @@
+[
+  {
+    "iterationIndex": 0,
+    "summary": {
+      "totalRequests": 6,
+      "passedRequests": 6,
+      "failedRequests": 0,
+      "skippedRequests": 0,
+      "errorRequests": 0,
+      "totalAssertions": 0,
+      "passedAssertions": 0,
+      "failedAssertions": 0,
+      "totalTests": 5,
+      "passedTests": 5,
+      "failedTests": 0,
+      "totalPreRequestTests": 0,
+      "passedPreRequestTests": 0,
+      "failedPreRequestTests": 0,
+      "totalPostResponseTests": 0,
+      "passedPostResponseTests": 0,
+      "failedPostResponseTests": 0
+    },
+    "results": [
+      {
+        "test": {
+          "filename": "Main.bru"
+        },
+        "request": {
+          "method": "GET",
+          "url": "http://localhost:3000/",
+          "headers": {}
+        },
+        "response": {
+          "status": 200,
+          "statusText": "OK",
+          "headers": {
+            "x-powered-by": "Express",
+            "content-type": "text/html; charset=utf-8",
+            "content-length": "11",
+            "etag": "W/\"b-b/dpicSS1cSWkCO01+K2HkvYfao\"",
+            "date": "Sat, 05 Jul 2025 09:15:12 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5"
+          },
+          "data": "API Running",
+          "responseTime": 4972
+        },
+        "error": null,
+        "status": "pass",
+        "assertionResults": [],
+        "testResults": [],
+        "preRequestTestResults": [],
+        "postResponseTestResults": [],
+        "shouldStopRunnerExecution": false,
+        "runDuration": 4.9937025,
+        "name": "Main",
+        "path": "Main",
+        "iterationIndex": 0
+      },
+      {
+        "test": {
+          "filename": "Create Task.bru"
+        },
+        "request": {
+          "method": "POST",
+          "url": "http://localhost:3000/api/tasks",
+          "headers": {
+            "Authorization": "Bearer test-token",
+            "content-type": "application/json"
+          },
+          "data": "{\n  \"requestId\": \"req-abc\",\n  \"assigneeId\": \"uuid-1234\",\n  \"resourceAllocations\": [\n    {\n      \"resourceId\": \"res-001\",\n      \"quantity\": 100\n    }\n  ]\n}"
+        },
+        "response": {
+          "status": 201,
+          "statusText": "Created",
+          "headers": {
+            "x-powered-by": "Express",
+            "content-type": "application/json; charset=utf-8",
+            "content-length": "93",
+            "etag": "W/\"5d-j6I6kDgnPsx/VCGoM3OeCqpvtdE\"",
+            "date": "Sat, 05 Jul 2025 09:15:14 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5"
+          },
+          "data": {
+            "taskId": "task-91e66bf5-80e5-4b56-a600-76f6ee3e8d8a",
+            "createdAt": "2025-07-05T09:15:14.739Z"
+          },
+          "responseTime": 2216
+        },
+        "error": null,
+        "status": "pass",
+        "assertionResults": [],
+        "testResults": [
+          {
+            "description": "should create task successfully",
+            "status": "pass",
+            "uid": "r4Z-3L0_uMwO0elQgkINe"
+          }
+        ],
+        "preRequestTestResults": [],
+        "postResponseTestResults": [],
+        "shouldStopRunnerExecution": false,
+        "runDuration": 2.2381635,
+        "name": "Create Task",
+        "path": "Create Task",
+        "iterationIndex": 0
+      },
+      {
+        "test": {
+          "filename": "Get All Tasks.bru"
+        },
+        "request": {
+          "method": "GET",
+          "url": "http://localhost:3000/api/tasks",
+          "headers": {
+            "Authorization": "Bearer test-token"
+          }
+        },
+        "response": {
+          "status": 200,
+          "statusText": "OK",
+          "headers": {
+            "x-powered-by": "Express",
+            "content-type": "application/json; charset=utf-8",
+            "content-length": "158",
+            "etag": "W/\"9e-jr/CAE0Ni7kC4dlFGD/zF3Ha8VI\"",
+            "date": "Sat, 05 Jul 2025 09:15:15 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5"
+          },
+          "data": [
+            {
+              "taskId": "task-91e66bf5-80e5-4b56-a600-76f6ee3e8d8a",
+              "requestId": "req-abc",
+              "status": "pending",
+              "createdAt": {
+                "_seconds": 1751706914,
+                "_nanoseconds": 352000000
+              }
+            }
+          ],
+          "responseTime": 512
+        },
+        "error": null,
+        "status": "pass",
+        "assertionResults": [],
+        "testResults": [
+          {
+            "description": "should get all tasks successfully",
+            "status": "pass",
+            "uid": "QR8y6RvtLCn6t380GS6AF"
+          }
+        ],
+        "preRequestTestResults": [],
+        "postResponseTestResults": [],
+        "shouldStopRunnerExecution": false,
+        "runDuration": 0.517371375,
+        "name": "Get All Tasks",
+        "path": "Get All Tasks",
+        "iterationIndex": 0
+      },
+      {
+        "test": {
+          "filename": "Get Task by ID.bru"
+        },
+        "request": {
+          "method": "GET",
+          "url": "http://localhost:3000/api/tasks/task-91e66bf5-80e5-4b56-a600-76f6ee3e8d8a",
+          "headers": {
+            "Authorization": "Bearer test-token"
+          }
+        },
+        "response": {
+          "status": 200,
+          "statusText": "OK",
+          "headers": {
+            "x-powered-by": "Express",
+            "content-type": "application/json; charset=utf-8",
+            "content-length": "216",
+            "etag": "W/\"d8-Eif1CrTBFFZ04emATR2i6CNp78o\"",
+            "date": "Sat, 05 Jul 2025 09:15:16 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5"
+          },
+          "data": {
+            "taskId": "task-91e66bf5-80e5-4b56-a600-76f6ee3e8d8a",
+            "requestId": "req-abc",
+            "status": "pending",
+            "notes": "",
+            "attachments": [],
+            "assignedResponder": "uuid-1234",
+            "createdAt": {
+              "_seconds": 1751706914,
+              "_nanoseconds": 352000000
+            }
+          },
+          "responseTime": 921
+        },
+        "error": null,
+        "status": "pass",
+        "assertionResults": [],
+        "testResults": [
+          {
+            "description": "should get task by ID successfully",
+            "status": "pass",
+            "uid": "BC4xBlQxKgffptIT1oydq"
+          }
+        ],
+        "preRequestTestResults": [],
+        "postResponseTestResults": [],
+        "shouldStopRunnerExecution": false,
+        "runDuration": 0.930224375,
+        "name": "Get Task by ID",
+        "path": "Get Task by ID",
+        "iterationIndex": 0
+      },
+      {
+        "test": {
+          "filename": "Update Task.bru"
+        },
+        "request": {
+          "method": "PUT",
+          "url": "http://localhost:3000/api/tasks/task-91e66bf5-80e5-4b56-a600-76f6ee3e8d8a",
+          "headers": {
+            "Authorization": "Bearer test-token",
+            "content-type": "application/json"
+          },
+          "data": "{\n  \"status\": \"completed\",\n  \"notes\": \"Delivered supplies safely.\",\n  \"attachments\": [\n    {\n      \"type\": \"image\",\n      \"url\": \"https://example.com/image.jpg\"\n    }\n  ]\n}"
+        },
+        "response": {
+          "status": 200,
+          "statusText": "OK",
+          "headers": {
+            "x-powered-by": "Express",
+            "content-type": "application/json; charset=utf-8",
+            "content-length": "93",
+            "etag": "W/\"5d-cV7BJQAUiOQRx13NZe1sM142zKQ\"",
+            "date": "Sat, 05 Jul 2025 09:15:17 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5"
+          },
+          "data": {
+            "taskId": "task-91e66bf5-80e5-4b56-a600-76f6ee3e8d8a",
+            "updatedAt": "2025-07-05T09:15:17.650Z"
+          },
+          "responseTime": 1443
+        },
+        "error": null,
+        "status": "pass",
+        "assertionResults": [],
+        "testResults": [
+          {
+            "description": "should update task successfully",
+            "status": "pass",
+            "uid": "NwKA5Dg7ToU-kUHJtiC8R"
+          }
+        ],
+        "preRequestTestResults": [],
+        "postResponseTestResults": [],
+        "shouldStopRunnerExecution": false,
+        "runDuration": 1.449338542,
+        "name": "Update Task",
+        "path": "Update Task",
+        "iterationIndex": 0
+      },
+      {
+        "test": {
+          "filename": "Test Task Flow.bru"
+        },
+        "request": {
+          "method": "POST",
+          "url": "http://localhost:3000/api/tasks",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer test-token"
+          },
+          "data": "{\n  \"requestId\": \"req-test-123\",\n  \"assigneeId\": \"user-test-456\",\n  \"resourceAllocations\": [\n    {\n      \"resourceId\": \"res-water-001\",\n      \"quantity\": 50\n    },\n    {\n      \"resourceId\": \"res-food-002\", \n      \"quantity\": 25\n    }\n  ]\n}"
+        },
+        "response": {
+          "status": 201,
+          "statusText": "Created",
+          "headers": {
+            "x-powered-by": "Express",
+            "content-type": "application/json; charset=utf-8",
+            "content-length": "93",
+            "etag": "W/\"5d-MXdGs0Pg+tfruW3FdKWAnHWYn9I\"",
+            "date": "Sat, 05 Jul 2025 09:15:18 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5"
+          },
+          "data": {
+            "taskId": "task-ac8d76d8-903c-498b-9249-14009f91f6be",
+            "createdAt": "2025-07-05T09:15:18.037Z"
+          },
+          "responseTime": 380
+        },
+        "error": null,
+        "status": "pass",
+        "assertionResults": [],
+        "testResults": [
+          {
+            "description": "should create task successfully",
+            "status": "pass",
+            "uid": "QEbhxBiukzcvPgB-r13L-"
+          }
+        ],
+        "preRequestTestResults": [],
+        "postResponseTestResults": [],
+        "shouldStopRunnerExecution": false,
+        "runDuration": 0.389134,
+        "name": "Test Task Flow",
+        "path": "Test Task Flow",
+        "iterationIndex": 0
+      }
+    ]
+  }
+]

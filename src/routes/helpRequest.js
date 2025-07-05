@@ -5,16 +5,17 @@ import {
 import { Router } from 'express';
 import getLogger from '../config/loggerConfig.js';
 import FirestoreStore from '../firebase/FirestoreStore.js';
+import StorageStore from '../firebase/StorageStore.js';
 import { v4 as uuidv4 } from 'uuid';
 import authMiddleware from '../middleware/authMiddleware.js';
 import { validate } from '../middleware/validate.js';
 import { firestoreDB } from '../config/firebaseConfig.js';
+import admin from 'firebase-admin';
 
 const router = Router();
 const logger = getLogger();
-const store = new FirestoreStore('requests');
-const requestsCol = firestoreDB.collection('requests');
-
+const store = new FirestoreStore('help-requests');
+const requestsCol = firestoreDB.collection('help-requests');
 router.use(authMiddleware());
 
 router.post('/', validate(createRequestSchema), async (req, res) => {
@@ -23,7 +24,6 @@ router.post('/', validate(createRequestSchema), async (req, res) => {
 
     const requestId = `req-${uuidv4()}`;
     const chatRoomId = `room-${uuidv4()}`;
-    const createdAt = new Date().toISOString();
 
     const newReq = {
       requestId,
@@ -32,9 +32,9 @@ router.post('/', validate(createRequestSchema), async (req, res) => {
       contactInfo,
       location,
       description,
-      attachments,
+      attachments: [],
       status: 'pending',
-      createdAt,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
       history: [],
     };
 
@@ -43,7 +43,23 @@ router.post('/', validate(createRequestSchema), async (req, res) => {
       return res.status(500).json({ error: result });
     }
 
-    return res.status(201).json({ requestId, chatRoomId, createdAt });
+    if (attachments && attachments.length > 0) {
+      const storageStore = new StorageStore(`help-requests/${requestId}`);
+      const attachmentDetails = [];
+
+      for (const attachment of attachments) {
+        const fileBuffer = Buffer.from(attachment.data, 'base64');
+        const attachmentDetail = await storageStore.create({
+          fileName: attachment.name,
+          fileBuffer,
+        });
+        attachmentDetails.push(attachmentDetail);
+      }
+
+      await store.update(requestId, { attachments: attachmentDetails });
+    }
+
+    return res.status(201).json({ requestId, chatRoomId });
   } catch (error) {
     logger.error('Error creating request', {
       error: error.message,
@@ -97,11 +113,13 @@ router.put('/:requestId', validate(updateRequestSchema), async (req, res) => {
       updates.history = history;
     }
 
-    const attachmentsToAdd = Array.isArray(newAttachments) ? newAttachments : [];
+    const attachmentsToAdd = Array.isArray(newAttachments)
+      ? newAttachments
+      : [];
     if (attachmentsToAdd.length) {
       updates.attachments = [
         ...(Array.isArray(exists.attachments) ? exists.attachments : []),
-        ...attachmentsToAdd
+        ...attachmentsToAdd,
       ];
     }
     updates.updatedAt = new Date().toISOString();

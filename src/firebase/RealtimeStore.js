@@ -14,6 +14,15 @@ class FirebaseRealtimeStore {
     return realtimeDB.ref(`${this.basePath}/${id}`);
   }
 
+  _formatResponse(id, snapshot) {
+    const val = snapshot.val() || {};
+    const { createdAt, updatedAt, ...userData } = val;
+    return {
+      data: userData,
+      metadata: { id, createdAt, updatedAt },
+    };
+  }
+
   async create(id, data) {
     const ref = this.buildRef(id);
     try {
@@ -22,10 +31,8 @@ class FirebaseRealtimeStore {
         createdAt: admin.database.ServerValue.TIMESTAMP,
         updatedAt: admin.database.ServerValue.TIMESTAMP,
       });
-
       const snapshot = await ref.once('value');
-      const val = snapshot.val() || {};
-      return { id, ...val };
+      return this._formatResponse(id, snapshot);
     } catch (error) {
       logger.error(`Firebase Realtime Store Create Failed: ${error.message}`, {
         id,
@@ -44,10 +51,8 @@ class FirebaseRealtimeStore {
         ...data,
         updatedAt: admin.database.ServerValue.TIMESTAMP,
       });
-
       const snapshot = await ref.once('value');
-      const val = snapshot.val() || {};
-      return { id, ...val };
+      return this._formatResponse(id, snapshot);
     } catch (error) {
       logger.error(`Firebase Realtime Store Update Failed: ${error.message}`, {
         id,
@@ -63,7 +68,7 @@ class FirebaseRealtimeStore {
     const ref = this.buildRef(id);
     try {
       await ref.remove();
-      return { id };
+      return { metadata: { id } };
     } catch (error) {
       logger.error(`Firebase Realtime Store Delete Failed: ${error.message}`, {
         id,
@@ -79,9 +84,7 @@ class FirebaseRealtimeStore {
     try {
       const snapshot = await ref.once('value');
       if (!snapshot.exists()) return null;
-
-      const val = snapshot.val() || {};
-      return { id, ...val };
+      return this._formatResponse(id, snapshot);
     } catch (error) {
       logger.error(`Firebase Realtime Store Read Failed: ${error.message}`, {
         id,

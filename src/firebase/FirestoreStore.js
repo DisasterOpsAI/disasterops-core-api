@@ -10,6 +10,15 @@ class FirestoreStore {
     this.collection = firestoreDB.collection(collectionName);
   }
 
+  _formatResponse(doc) {
+    const docData = doc.data();
+    const { createdAt, updatedAt, ...userData } = docData;
+    return {
+      data: userData,
+      metadata: { id: doc.id, createdAt, updatedAt },
+    };
+  }
+
   async create(id, data) {
     try {
       await this.collection.doc(id).set({
@@ -17,9 +26,8 @@ class FirestoreStore {
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
-
       const snap = await this.collection.doc(id).get();
-      return { id: snap.id, ...snap.data() };
+      return this._formatResponse(snap);
     } catch (err) {
       logger.error(`FirestoreStore.create failed: ${err.message}`, {
         id,
@@ -32,7 +40,8 @@ class FirestoreStore {
   async read(id) {
     try {
       const doc = await this.collection.doc(id).get();
-      return doc.exists ? { id: doc.id, ...doc.data() } : null;
+      if (!doc.exists) return null;
+      return this._formatResponse(doc);
     } catch (err) {
       logger.error(`FirestoreStore.read failed: ${err.message}`, { id });
       throw new Error(`FirestoreStore.read failed: ${err.message}`);
@@ -45,9 +54,8 @@ class FirestoreStore {
         ...data,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
-
       const snap = await this.collection.doc(id).get();
-      return { id: snap.id, ...snap.data() };
+      return this._formatResponse(snap);
     } catch (err) {
       logger.error(`FirestoreStore.update failed: ${err.message}`, {
         id,
@@ -60,7 +68,7 @@ class FirestoreStore {
   async delete(id) {
     try {
       await this.collection.doc(id).delete();
-      return { id };
+      return { metadata: { id } };
     } catch (err) {
       logger.error(`FirestoreStore.delete failed: ${err.message}`, { id });
       throw new Error(`FirestoreStore.delete failed: ${err.message}`);

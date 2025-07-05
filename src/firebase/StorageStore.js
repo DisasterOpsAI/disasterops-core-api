@@ -15,6 +15,29 @@ class StorageStore {
     );
   }
 
+  _formatResponse(meta, downloadURL) {
+    const {
+      id,
+      name,
+      timeCreated,
+      updated,
+      metadata: customMetadata,
+    } = meta;
+    return {
+      file: {
+        id,
+        name: name.split('/').pop(),
+        path: name,
+        downloadURL,
+      },
+      metadata: {
+        createdAt: timeCreated,
+        updatedAt: updated,
+        custom: customMetadata || {},
+      },
+    };
+  }
+
   getFile(fileName) {
     const filePath = `${this.baseFolderPath}/${fileName}`;
     const file = storageBucket.file(filePath);
@@ -49,45 +72,31 @@ class StorageStore {
     try {
       const { file, filePath } = this.getFile(fileName);
       const [exists] = await file.exists();
+
       if (exists) {
         const [meta] = await file.getMetadata();
-        const existingId = meta.id;
-        const existingMd = meta.metadata || {};
         logger.warn(
-          `File already exists (id=${existingId}), returning existing URL`
+          `File already exists (id=${meta.id}), returning existing metadata.`
         );
-        return {
-          id: existingId,
-          name: fileName,
-          path: filePath,
-          downloadURL: this.getDownloadUrl(filePath),
-          metadata: existingMd,
-        };
+        const downloadURL = this.getDownloadUrl(filePath);
+        return this._formatResponse(meta, downloadURL);
       }
+
       const resumable = fileBuffer.length > CHUNK_SIZE;
       await file.save(fileBuffer, {
-        metadata: {
-          ...metadata,
-          uploadedAt: new Date().toISOString(),
-        },
+        metadata,
         resumable,
       });
-      const [uploadedMeta] = await file.getMetadata();
-      const fileId = uploadedMeta.id;
-      const newMd = uploadedMeta.metadata || {};
-      let downloadURL;
+
       if (makePublic) {
         await file.makePublic();
-        downloadURL = this.getDownloadUrl(filePath);
       }
-      logger.info(`File uploaded (id=${fileId}): ${fileName}`);
-      return {
-        id: fileId,
-        name: fileName,
-        path: filePath,
-        downloadURL,
-        metadata: newMd,
-      };
+
+      const [uploadedMeta] = await file.getMetadata();
+      const downloadURL = makePublic ? this.getDownloadUrl(filePath) : undefined;
+
+      logger.info(`File uploaded (id=${uploadedMeta.id}): ${fileName}`);
+      return this._formatResponse(uploadedMeta, downloadURL);
     } catch (error) {
       logger.error(`StorageStore.create failed: ${error.message}`, {
         fileName,
@@ -99,17 +108,9 @@ class StorageStore {
   async read(fileId) {
     try {
       const file = await this.findFileById(fileId);
-      const filePath = file.name;
-      const fileName = filePath.split('/').pop();
       const [meta] = await file.getMetadata();
-      const md = meta.metadata || {};
-      return {
-        id: fileId,
-        name: fileName,
-        path: filePath,
-        downloadURL: this.getDownloadUrl(filePath),
-        metadata: md,
-      };
+      const downloadURL = this.getDownloadUrl(file.name);
+      return this._formatResponse(meta, downloadURL);
     } catch (error) {
       logger.error(`StorageStore.read failed: ${error.message}`, { fileId });
       throw new Error(`StorageStore.read failed: ${error.message}`);
@@ -119,32 +120,24 @@ class StorageStore {
   async update({ fileId, fileBuffer, metadata = {}, makePublic = false }) {
     try {
       const file = await this.findFileById(fileId);
-      const filePath = file.name;
-      const fileName = filePath.split('/').pop();
       const [oldMeta] = await file.getMetadata();
-      const existingMd = oldMeta.metadata || {};
       const mergedMd = {
-        ...existingMd,
+        ...(oldMeta.metadata || {}),
         ...metadata,
-        updatedAt: new Date().toISOString(),
       };
+
       const resumable = fileBuffer.length > CHUNK_SIZE;
       await file.save(fileBuffer, { metadata: mergedMd, resumable });
-      const [newMeta] = await file.getMetadata();
-      const newMd = newMeta.metadata || {};
-      let downloadURL;
+
       if (makePublic) {
         await file.makePublic();
-        downloadURL = this.getDownloadUrl(filePath);
       }
-      logger.info(`File updated (id=${fileId}): ${fileName}`);
-      return {
-        id: fileId,
-        name: fileName,
-        path: filePath,
-        downloadURL,
-        metadata: newMd,
-      };
+
+      const [newMeta] = await file.getMetadata();
+      const downloadURL = makePublic ? this.getDownloadUrl(file.name) : undefined;
+
+      logger.info(`File updated (id=${fileId}): ${file.name.split('/').pop()}`);
+      return this._formatResponse(newMeta, downloadURL);
     } catch (error) {
       logger.error(`StorageStore.update failed: ${error.message}`, { fileId });
       throw new Error(`StorageStore.update failed: ${error.message}`);
@@ -159,9 +152,14 @@ class StorageStore {
       await file.delete();
       logger.info(`File deleted (id=${fileId}): ${fileName}`);
       return {
-        id: fileId,
-        name: fileName,
-        path: filePath,
+        file: {
+          id: fileId,
+          name: fileName,
+          path: filePath,
+        },
+        metadata: {
+          deleted: true,
+        },
       };
     } catch (error) {
       logger.error(`StorageStore.delete failed: ${error.message}`, { fileId });

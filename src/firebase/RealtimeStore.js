@@ -14,12 +14,11 @@ class FirebaseRealtimeStore {
     return realtimeDB.ref(`${this.basePath}/${id}`);
   }
 
-  _formatResponse(id, snapshot) {
-    const val = snapshot.val() || {};
-    const { createdAt, updatedAt, ...userData } = val;
+  _getMetadata(id, data) {
     return {
-      data: userData,
-      metadata: { id, createdAt, updatedAt },
+      id,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
     };
   }
 
@@ -32,7 +31,12 @@ class FirebaseRealtimeStore {
         updatedAt: admin.database.ServerValue.TIMESTAMP,
       });
       const snapshot = await ref.once('value');
-      return this._formatResponse(id, snapshot);
+      const val = snapshot.val();
+      const { createdAt, updatedAt, ...userData } = val;
+      return {
+        data: userData,
+        metadata: this._getMetadata(id, val),
+      };
     } catch (error) {
       logger.error(`Firebase Realtime Store Create Failed: ${error.message}`, {
         id,
@@ -52,7 +56,12 @@ class FirebaseRealtimeStore {
         updatedAt: admin.database.ServerValue.TIMESTAMP,
       });
       const snapshot = await ref.once('value');
-      return this._formatResponse(id, snapshot);
+      const val = snapshot.val();
+      const { createdAt, updatedAt, ...userData } = val;
+      return {
+        data: userData,
+        metadata: this._getMetadata(id, val),
+      };
     } catch (error) {
       logger.error(`Firebase Realtime Store Update Failed: ${error.message}`, {
         id,
@@ -84,7 +93,13 @@ class FirebaseRealtimeStore {
     try {
       const snapshot = await ref.once('value');
       if (!snapshot.exists()) return null;
-      return this._formatResponse(id, snapshot);
+
+      const val = snapshot.val();
+      const { createdAt, updatedAt, ...userData } = val;
+      return {
+        data: userData,
+        metadata: this._getMetadata(id, val),
+      };
     } catch (error) {
       logger.error(`Firebase Realtime Store Read Failed: ${error.message}`, {
         id,

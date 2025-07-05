@@ -20,7 +20,9 @@ class FirebaseRealtimeStore {
       await ref.set({
         ...data,
         createdAt: admin.database.ServerValue.TIMESTAMP,
+        updatedAt: admin.database.ServerValue.TIMESTAMP,
       });
+
       const snapshot = await ref.once('value');
       const val = snapshot.val() || {};
       return { id, ...val };
@@ -29,21 +31,31 @@ class FirebaseRealtimeStore {
         id,
         data,
       });
-      return `Firebase Realtime Store Create Failed: ${error.message}`;
+      throw new Error(
+        `Firebase Realtime Store Create Failed: ${error.message}`
+      );
     }
   }
 
   async update(id, data) {
     const ref = this.buildRef(id);
     try {
-      await ref.update(data);
-      return { id, ...data };
+      await ref.update({
+        ...data,
+        updatedAt: admin.database.ServerValue.TIMESTAMP,
+      });
+
+      const snapshot = await ref.once('value');
+      const val = snapshot.val() || {};
+      return { id, ...val };
     } catch (error) {
       logger.error(`Firebase Realtime Store Update Failed: ${error.message}`, {
         id,
         data,
       });
-      return `Firebase Realtime Store Update Failed: ${error.message}`;
+      throw new Error(
+        `Firebase Realtime Store Update Failed: ${error.message}`
+      );
     }
   }
 
@@ -56,7 +68,9 @@ class FirebaseRealtimeStore {
       logger.error(`Firebase Realtime Store Delete Failed: ${error.message}`, {
         id,
       });
-      return `Firebase Realtime Store Delete Failed: ${error.message}`;
+      throw new Error(
+        `Firebase Realtime Store Delete Failed: ${error.message}`
+      );
     }
   }
 
@@ -64,13 +78,15 @@ class FirebaseRealtimeStore {
     const ref = this.buildRef(id);
     try {
       const snapshot = await ref.once('value');
-      const val = snapshot.val();
-      return val ? { id, ...val } : null;
+      if (!snapshot.exists()) return null;
+
+      const val = snapshot.val() || {};
+      return { id, ...val };
     } catch (error) {
       logger.error(`Firebase Realtime Store Read Failed: ${error.message}`, {
         id,
       });
-      return `Firebase Realtime Store Read Failed: ${error.message}`;
+      throw new Error(`Firebase Realtime Store Read Failed: ${error.message}`);
     }
   }
 }

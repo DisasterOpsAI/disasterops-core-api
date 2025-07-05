@@ -9,11 +9,13 @@ class FirestoreStore {
     if (!collectionName) throw new Error("Missing 'collectionName'");
     this.collection = firestoreDB.collection(collectionName);
   }
+
   async create(id, data) {
     try {
       await this.collection.doc(id).set({
         ...data,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
       const snap = await this.collection.doc(id).get();
@@ -23,7 +25,7 @@ class FirestoreStore {
         id,
         data,
       });
-      return `FirestoreStore.create failed: ${err.message}`;
+      throw new Error(`FirestoreStore.create failed: ${err.message}`);
     }
   }
 
@@ -33,20 +35,25 @@ class FirestoreStore {
       return doc.exists ? { id: doc.id, ...doc.data() } : null;
     } catch (err) {
       logger.error(`FirestoreStore.read failed: ${err.message}`, { id });
-      return `FirestoreStore.read failed: ${err.message}`;
+      throw new Error(`FirestoreStore.read failed: ${err.message}`);
     }
   }
 
   async update(id, data) {
     try {
-      await this.collection.doc(id).update(data);
-      return { id, ...data };
+      await this.collection.doc(id).update({
+        ...data,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      const snap = await this.collection.doc(id).get();
+      return { id: snap.id, ...snap.data() };
     } catch (err) {
       logger.error(`FirestoreStore.update failed: ${err.message}`, {
         id,
         data,
       });
-      return `FirestoreStore.update failed: ${err.message}`;
+      throw new Error(`FirestoreStore.update failed: ${err.message}`);
     }
   }
 
@@ -56,7 +63,7 @@ class FirestoreStore {
       return { id };
     } catch (err) {
       logger.error(`FirestoreStore.delete failed: ${err.message}`, { id });
-      return `FirestoreStore.delete failed: ${err.message}`;
+      throw new Error(`FirestoreStore.delete failed: ${err.message}`);
     }
   }
 }

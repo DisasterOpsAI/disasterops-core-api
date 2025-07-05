@@ -2,7 +2,8 @@ import { storageBucket } from '../config/firebaseConfig.js';
 import getLogger from '../config/loggerConfig.js';
 
 const logger = getLogger();
-const CHUNK_SIZE = 5 * 1024 * 1024;
+const mbToBytes = (mb) => mb * 1024 * 1024;
+const CHUNK_SIZE = mbToBytes(5);
 
 class StorageStore {
   constructor(baseFolderPath) {
@@ -45,95 +46,127 @@ class StorageStore {
   }
 
   async create({ fileName, fileBuffer, metadata = {}, makePublic = false }) {
-    const { file, filePath } = this.getFile(fileName);
-    const [exists] = await file.exists();
-    if (exists) {
-      const [meta] = await file.getMetadata();
-      const existingId = meta.id;
-      const existingMd = meta.metadata || {};
-      logger.warn(
-        `File already exists (id=${existingId}), returning existing URL`
-      );
+    try {
+      const { file, filePath } = this.getFile(fileName);
+      const [exists] = await file.exists();
+      if (exists) {
+        const [meta] = await file.getMetadata();
+        const existingId = meta.id;
+        const existingMd = meta.metadata || {};
+        logger.warn(
+          `File already exists (id=${existingId}), returning existing URL`
+        );
+        return {
+          id: existingId,
+          name: fileName,
+          path: filePath,
+          downloadURL: this.getDownloadUrl(filePath),
+          metadata: existingMd,
+        };
+      }
+      const resumable = fileBuffer.length > CHUNK_SIZE;
+      await file.save(fileBuffer, {
+        metadata: {
+          ...metadata,
+          uploadedAt: new Date().toISOString(),
+        },
+        resumable,
+      });
+      const [uploadedMeta] = await file.getMetadata();
+      const fileId = uploadedMeta.id;
+      const newMd = uploadedMeta.metadata || {};
+      let downloadURL;
+      if (makePublic) {
+        await file.makePublic();
+        downloadURL = this.getDownloadUrl(filePath);
+      }
+      logger.info(`File uploaded (id=${fileId}): ${fileName}`);
       return {
-        id: existingId,
+        id: fileId,
         name: fileName,
         path: filePath,
-        downloadURL: this.getDownloadUrl(filePath),
-        metadata: existingMd,
+        downloadURL,
+        metadata: newMd,
       };
+    } catch (error) {
+      logger.error(`StorageStore.create failed: ${error.message}`, {
+        fileName,
+      });
+      throw new Error(`StorageStore.create failed: ${error.message}`);
     }
-    const resumable = fileBuffer.length > CHUNK_SIZE;
-    await file.save(fileBuffer, { metadata, resumable });
-    const [uploadedMeta] = await file.getMetadata();
-    const fileId = uploadedMeta.id;
-    const newMd = uploadedMeta.metadata || {};
-    let downloadURL;
-    if (makePublic) {
-      await file.makePublic();
-      downloadURL = this.getDownloadUrl(filePath);
-    }
-    logger.info(`File uploaded (id=${fileId}): ${fileName}`);
-    return {
-      id: fileId,
-      name: fileName,
-      path: filePath,
-      downloadURL,
-      metadata: newMd,
-    };
   }
 
   async read(fileId) {
-    const file = await this.findFileById(fileId);
-    const filePath = file.name;
-    const fileName = filePath.split('/').pop();
-    const [meta] = await file.getMetadata();
-    const md = meta.metadata || {};
-    return {
-      id: fileId,
-      name: fileName,
-      path: filePath,
-      downloadURL: this.getDownloadUrl(filePath),
-      metadata: md,
-    };
+    try {
+      const file = await this.findFileById(fileId);
+      const filePath = file.name;
+      const fileName = filePath.split('/').pop();
+      const [meta] = await file.getMetadata();
+      const md = meta.metadata || {};
+      return {
+        id: fileId,
+        name: fileName,
+        path: filePath,
+        downloadURL: this.getDownloadUrl(filePath),
+        metadata: md,
+      };
+    } catch (error) {
+      logger.error(`StorageStore.read failed: ${error.message}`, { fileId });
+      throw new Error(`StorageStore.read failed: ${error.message}`);
+    }
   }
 
   async update({ fileId, fileBuffer, metadata = {}, makePublic = false }) {
-    const file = await this.findFileById(fileId);
-    const filePath = file.name;
-    const fileName = filePath.split('/').pop();
-    const [oldMeta] = await file.getMetadata();
-    const existingMd = oldMeta.metadata || {};
-    const mergedMd = { ...existingMd, ...metadata };
-    const resumable = fileBuffer.length > CHUNK_SIZE;
-    await file.save(fileBuffer, { metadata: mergedMd, resumable });
-    const [newMeta] = await file.getMetadata();
-    const newMd = newMeta.metadata || {};
-    let downloadURL;
-    if (makePublic) {
-      await file.makePublic();
-      downloadURL = this.getDownloadUrl(filePath);
+    try {
+      const file = await this.findFileById(fileId);
+      const filePath = file.name;
+      const fileName = filePath.split('/').pop();
+      const [oldMeta] = await file.getMetadata();
+      const existingMd = oldMeta.metadata || {};
+      const mergedMd = {
+        ...existingMd,
+        ...metadata,
+        updatedAt: new Date().toISOString(),
+      };
+      const resumable = fileBuffer.length > CHUNK_SIZE;
+      await file.save(fileBuffer, { metadata: mergedMd, resumable });
+      const [newMeta] = await file.getMetadata();
+      const newMd = newMeta.metadata || {};
+      let downloadURL;
+      if (makePublic) {
+        await file.makePublic();
+        downloadURL = this.getDownloadUrl(filePath);
+      }
+      logger.info(`File updated (id=${fileId}): ${fileName}`);
+      return {
+        id: fileId,
+        name: fileName,
+        path: filePath,
+        downloadURL,
+        metadata: newMd,
+      };
+    } catch (error) {
+      logger.error(`StorageStore.update failed: ${error.message}`, { fileId });
+      throw new Error(`StorageStore.update failed: ${error.message}`);
     }
-    logger.info(`File updated (id=${fileId}): ${fileName}`);
-    return {
-      id: fileId,
-      name: fileName,
-      path: filePath,
-      downloadURL,
-      metadata: newMd,
-    };
   }
 
   async delete(fileId) {
-    const file = await this.findFileById(fileId);
-    const filePath = file.name;
-    const fileName = filePath.split('/').pop();
-    await file.delete();
-    logger.info(`File deleted (id=${fileId}): ${fileName}`);
-    return {
-      id: fileId,
-      name: fileName,
-      path: filePath,
-    };
+    try {
+      const file = await this.findFileById(fileId);
+      const filePath = file.name;
+      const fileName = filePath.split('/').pop();
+      await file.delete();
+      logger.info(`File deleted (id=${fileId}): ${fileName}`);
+      return {
+        id: fileId,
+        name: fileName,
+        path: filePath,
+      };
+    } catch (error) {
+      logger.error(`StorageStore.delete failed: ${error.message}`, { fileId });
+      throw new Error(`StorageStore.delete failed: ${error.message}`);
+    }
   }
 }
 

@@ -1,6 +1,8 @@
 import express from 'express';
 import expressWinston from 'express-winston';
 import getLogger from './config/loggerConfig.js';
+import helpRequestRouter from './routes/helpRequest.js';
+
 import cacheMiddleware from './middleware/cache.js';
 const logger = getLogger();
 const app = express();
@@ -17,4 +19,7 @@ app.use(
 );
 app.use(cacheMiddleware(60)); // Cache responses for 60 seconds
 app.get('/', (_, res) => res.send('API Running'));
+
+app.use("/api/requests", helpRequestRouter);
+
 export default app;

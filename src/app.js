@@ -2,6 +2,8 @@ import express from 'express';
 import expressWinston from 'express-winston';
 import getLogger from './config/loggerConfig.js';
 import userRoutes from './routes/userRoutes.js';
+import helpRequestRouter from './routes/helpRequest.js';
+import cacheMiddleware from './middleware/cache.js';
 
 const logger = getLogger();
 const app = express();
@@ -16,9 +18,11 @@ app.use(
     ignoreRoute: () => false,
   })
 );
+app.use(cacheMiddleware(60)); // Cache responses for 60 seconds
 app.get('/', (_, res) => res.send('API Running'));
 
 app.use('/api/users', userRoutes);
+app.use("/api/requests", helpRequestRouter);
 
 app.use((err, req, res, next) => {
   logger.error('Unhandled error', { error: err.stack });

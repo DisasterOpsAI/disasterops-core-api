@@ -1,0 +1,24 @@
+meta {
+  name: Create Help Request
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{endpoint}}/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "John Doe",
+    "contactInfo": "john.doe@example.com",
+    "location": {
+      "lat": 34.052235,
+      "lng": -118.243683
+    },
+    "description": "Need help with food and water.",
+    "attachments": []
+  }
+}

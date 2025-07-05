@@ -38,60 +38,63 @@ The backend is built with **Node.js** and **Express**, and integrates with **Fir
 | Authentication   | Firebase Auth                                               |
 | AI Logic         | External AI Agent API (maintained in a separate repository) |
 
-```
 ## Folder Structure
 
-my-express-backend/
-├── src/
-│   ├── config/
-│   │   ├── index.js               # Loads env, selects provider adapters
-│   │   └── providers.js           # Maps CLOUD_PROVIDER to adapter modules
-│   │
-│   ├── common/
-│   │   ├── logger/                # Winston or similar
-│   │   └── errors/                # Custom error classes
-│   │
-│   ├── adapters/                  # Provider-specific implementations
-│   │   ├── database/
-│   │   │   ├── firebaseDb.js      # Firebase Realtime Database adapter
-│   │   │   └── mongoDb.js         # MongoDB adapter (example)
-│   │   └── storage/
-│   │       ├── firebaseStorage.js
-│   │       └── s3Storage.js       # AWS S3 adapter example
-│   │
-│   ├── domain/                    # Feature modules
-│   │   ├── users/
-│   │   │   ├── users.model.js
-│   │   │   ├── users.service.js
-│   │   │   ├── users.controller.js
-│   │   │   └── users.routes.js
-│   │   └── posts/
-│   │       ├── posts.model.js
-│   │       ├── posts.service.js
-│   │       ├── posts.controller.js
-│   │       └── posts.routes.js
-│   │
-│   ├── interfaces/                # Abstractions for adapters
-│   │   ├── IDatabaseService.js
-│   │   └── IStorageService.js
-│   │
-│   ├── middlewares/
-│   │   ├── auth.js
-│   │   └── errorHandler.js
-│   │
-│   ├── routes/
-│   │   └── index.js               # Main router mounting feature routes
-│   │
-│   ├── app.js                     # Express app setup
-│   └── server.js                  # Starts HTTP server
-│
-├── tests/                         # Unit & integration tests
-│   ├── unit/
-│   └── integration/
-│
+```
+disasterops-core-api/
 ├── .env.example
+├── .gitignore
+├── .prettierrc
+├── Dockerfile
+├── eslint.config.mjs
+├── LICENSE
 ├── package.json
-└── README.md
+├── pnpm-lock.yaml
+├── README.md
+├── serverless.yml
+├── .github/
+│   ├── labeler.yml
+│   └── workflows/
+│       ├── dependency-review.yml
+│       ├── docker-image.yml
+│       ├── greetings.yml
+│       ├── label.yml
+│       ├── manual.yml
+│       ├── serverless-deploy.yml
+│       ├── stale.yml
+│       └── summary.yml
+├── api-tests/
+│   └── DisasterOps Core API/
+│       ├── bruno.json
+│       └── Main.bru
+├── archive/
+│   ├── index.cjs
+│   └── webpack.config.js
+└── src/
+    ├── app.js
+    ├── index.js
+    ├── server.js
+    ├── config/
+    │   ├── firebaseConfig.js
+    │   ├── hashConfig.js
+    │   ├── loggerConfig.js
+    │   ├── redisConfig.js
+    │   └── rolesConfig.js
+    ├── firebase/
+    │   ├── FirestoreStore.js
+    │   ├── RealtimeStore.js
+    │   └── StorageStore.js
+    ├── middleware/
+    │   ├── authMiddleware.js
+    │   ├── cache.js
+    │   └── validate.js
+    ├── routes/
+    │   └── helpRequest.js
+    ├── utils/
+    │   ├── hasher.js
+    │   └── responseBinder.js
+    └── validation/
+        └── requestSchemas.js
 ```
 
 ## Setup Instructions
